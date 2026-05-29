@@ -22,6 +22,7 @@ interface Result {
   signals: Signal[];
   scraped_at: string;
   company: string;
+  domain: string;
 }
 
 type AnalysisErrorResult = {
@@ -34,6 +35,25 @@ type AnalysisErrorResult = {
 type StreamEvent = {
   event?: string;
   data?: Result | AnalysisErrorResult;
+  error?: string;
+};
+
+type Prediction = {
+  timeframe: "30 days" | "60 days" | "90 days";
+  category: "gtm" | "financial" | "security";
+  prediction: string;
+  reasoning: string;
+  confidence: "high" | "medium" | "low";
+  signal_direction: "positive" | "negative" | "neutral";
+};
+
+type PredictionsResult = {
+  predictions: Prediction[];
+  overall_trajectory?: string;
+  biggest_risk?: string;
+  biggest_opportunity?: string;
+  confidence?: string;
+  message?: string;
   error?: string;
 };
 
@@ -141,12 +161,110 @@ function SignalCard({ signal }: { signal: Signal }) {
   );
 }
 
+function predictionArrow(direction: Prediction["signal_direction"]) {
+  if (direction === "positive") {
+    return "↑";
+  }
+  if (direction === "negative") {
+    return "↓";
+  }
+  return "→";
+}
+
+function categoryIcon(category: Prediction["category"]) {
+  if (category === "gtm") {
+    return "GTM";
+  }
+  if (category === "financial") {
+    return "$";
+  }
+  return "SEC";
+}
+
+function PredictionCard({ prediction }: { prediction: Prediction }) {
+  return (
+    <div className="border border-[#7C3AED]/40 bg-black p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="border border-[#7C3AED]/50 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+            {prediction.timeframe}
+          </span>
+          <span className="border border-zinc-800 px-2 py-1 text-[10px] font-bold text-zinc-500">
+            {categoryIcon(prediction.category)}
+          </span>
+        </div>
+        <span className="text-2xl font-bold text-[#7C3AED]">{predictionArrow(prediction.signal_direction)}</span>
+      </div>
+      <h3 className="mt-5 text-lg font-bold leading-6 text-zinc-100">{prediction.prediction}</h3>
+      <p className="mt-3 text-sm leading-6 text-zinc-400">{prediction.reasoning}</p>
+      <div className="mt-5 inline-flex border border-[#7C3AED]/40 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+        {prediction.confidence.toUpperCase()} CONFIDENCE
+      </div>
+    </div>
+  );
+}
+
+function PredictiveIntelligence({
+  predictions,
+  isLoading,
+  error
+}: {
+  predictions: PredictionsResult | null;
+  isLoading: boolean;
+  error: string;
+}) {
+  return (
+    <section className="border border-[#7C3AED]/40 bg-black p-5">
+      <div className="mb-5 flex items-center gap-3">
+        <h2 className="text-xl font-bold text-zinc-100">PREDICTIVE INTELLIGENCE</h2>
+        <span className="border border-[#7C3AED]/40 px-2 py-1 text-xs font-bold text-[#7C3AED]">BETA</span>
+      </div>
+
+      {isLoading && <p className="text-sm text-[#7C3AED]">🔮 Analyzing patterns...</p>}
+      {error && <p className="border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{error}</p>}
+
+      {!isLoading && predictions?.message && <p className="text-sm text-zinc-500">{predictions.message}</p>}
+
+      {!isLoading && predictions && predictions.predictions.length > 0 && (
+        <div className="space-y-5">
+          <div className="border border-[#7C3AED]/40 bg-[#12091f] p-5">
+            <div className="text-xs font-bold text-[#7C3AED]">OVERALL TRAJECTORY</div>
+            <p className="mt-3 text-lg font-bold leading-7 text-zinc-100">{predictions.overall_trajectory}</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {predictions.predictions.slice(0, 3).map((prediction, index) => (
+              <PredictionCard key={`${prediction.timeframe}-${prediction.category}-${index}`} prediction={prediction} />
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="border border-red-500/40 bg-black p-5">
+              <div className="text-xs font-bold text-red-500">⚠️ BIGGEST RISK</div>
+              <p className="mt-3 text-sm leading-6 text-zinc-300">{predictions.biggest_risk}</p>
+            </div>
+            <div className="border border-[#1D9E75]/40 bg-black p-5">
+              <div className="text-xs font-bold text-[#1D9E75]">🚀 BIGGEST OPPORTUNITY</div>
+              <p className="mt-3 text-sm leading-6 text-zinc-300">{predictions.biggest_opportunity}</p>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-zinc-600">Predictions based on pattern analysis. Not financial advice.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Page() {
   const [company, setCompany] = useState("");
   const [domain, setDomain] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingLines, setLoadingLines] = useState<string[]>([]);
   const [result, setResult] = useState<Result | null>(null);
+  const [predictions, setPredictions] = useState<PredictionsResult | null>(null);
+  const [isPredictionsLoading, setIsPredictionsLoading] = useState(false);
+  const [predictionsError, setPredictionsError] = useState("");
   const [error, setError] = useState("");
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
@@ -189,10 +307,49 @@ export default function Page() {
     }
   }, [isLoading, result]);
 
+  useEffect(() => {
+    if (!result) {
+      return;
+    }
+
+    const predictionDomain = result.domain || inferDomain(result.company);
+    if (!predictionDomain) {
+      return;
+    }
+
+    async function fetchPredictions() {
+      setPredictions(null);
+      setPredictionsError("");
+      setIsPredictionsLoading(true);
+
+      try {
+        const response = await fetch(`${apiUrl}/predictions/${encodeURIComponent(predictionDomain)}`);
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          throw new Error(payload?.error || "Prediction analysis failed.");
+        }
+
+        const payload = (await response.json()) as PredictionsResult;
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        setPredictions(payload);
+      } catch (caughtError) {
+        setPredictionsError(caughtError instanceof Error ? caughtError.message : "Prediction analysis failed.");
+      } finally {
+        setIsPredictionsLoading(false);
+      }
+    }
+
+    fetchPredictions();
+  }, [result]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setResult(null);
+    setPredictions(null);
+    setPredictionsError("");
 
     const nextCompany = company.trim();
     const nextDomain = resolvedDomain.trim();
@@ -397,12 +554,20 @@ export default function Page() {
               </div>
             </section>
 
+            <PredictiveIntelligence
+              error={predictionsError}
+              isLoading={isPredictionsLoading}
+              predictions={predictions}
+            />
+
             <button
               className="h-14 w-full border border-[#1D9E75] bg-transparent text-sm font-bold text-[#1D9E75] transition hover:bg-[#1D9E75] hover:text-black"
               onClick={() => {
                 setCompany("");
                 setDomain("");
                 setResult(null);
+                setPredictions(null);
+                setPredictionsError("");
                 setError("");
               }}
               type="button"

@@ -13,7 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from database import add_to_watchlist, delete_from_watchlist, get_watchlist, init_db
+from database import add_to_watchlist, delete_from_watchlist, get_watchlist, init_db, save_analysis
+from predictions import generate_predictions
 from scraper import scrape_jobs, scrape_news, scrape_pricing, scrape_reviews
 from synthesizer import synthesize
 
@@ -54,6 +55,13 @@ def _log(message: str) -> None:
 
 def _normalize_domain(domain: str) -> str:
     return domain.strip().removeprefix("https://").removeprefix("http://").strip("/")
+
+
+def _watchlist_company_for_domain(domain: str) -> str | None:
+    for entry in get_watchlist():
+        if entry["domain"] == domain:
+            return entry["company"]
+    return None
 
 
 async def _timed_call(
@@ -176,7 +184,10 @@ async def _analyze_stream(company: str, domain: str) -> AsyncGenerator[str, None
         **synthesis,
         "scraped_at": scraped_at,
         "company": company,
+        "domain": domain,
     }
+    save_analysis(company, domain, result)
+    asyncio.create_task(generate_predictions(company, domain))
 
     elapsed = perf_counter() - started
     _log(f"analysis completed in {elapsed:.2f}s")
@@ -261,6 +272,16 @@ def create_app() -> FastAPI:
     @app.get("/watchlist")
     async def list_watchlist_entries() -> list[dict[str, Any]]:
         return get_watchlist()
+
+    @app.get("/predictions/{domain}")
+    async def predictions(domain: str) -> dict[str, Any]:
+        normalized_domain = _normalize_domain(domain)
+        company = _watchlist_company_for_domain(normalized_domain)
+        if not company:
+            raise HTTPException(status_code=404, detail="domain is not on the watchlist")
+
+        from predictions import generate_predictions_by_domain
+        return await generate_predictions_by_domain(normalized_domain)
 
     @app.delete("/watchlist/{company}")
     async def remove_watchlist_entry(company: str) -> dict[str, Any]:

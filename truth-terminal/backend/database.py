@@ -24,6 +24,18 @@ def _row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
     return dict(row)
 
 
+def _parse_signals(row: dict[str, Any]) -> dict[str, Any]:
+    signals = row.get("signals")
+    if isinstance(signals, str):
+        try:
+            row["signals"] = json.loads(signals)
+        except json.JSONDecodeError:
+            row["signals"] = []
+    elif signals is None:
+        row["signals"] = []
+    return row
+
+
 def init_db() -> None:
     with _connect() as connection:
         connection.execute(
@@ -133,6 +145,30 @@ def get_last_analysis(company: str, domain: str) -> dict[str, Any] | None:
             (company, domain),
         ).fetchone()
         return _row_to_dict(row)
+
+
+def get_analysis_history(company: str, domain: str, limit: int = 10) -> list[dict[str, Any]]:
+    with _connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                company,
+                domain,
+                gtm_score,
+                financial_score,
+                security_score,
+                truth_score,
+                signals,
+                scraped_at
+            FROM analyses
+            WHERE company = ? AND domain = ?
+            ORDER BY scraped_at DESC
+            LIMIT ?
+            """,
+            (company, domain, limit),
+        ).fetchall()
+        return [_parse_signals(dict(row)) for row in rows]
 
 
 def delete_from_watchlist(company: str, domain: str | None = None) -> int:

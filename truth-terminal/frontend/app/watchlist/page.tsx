@@ -16,6 +16,25 @@ type EnrichedWatchlistEntry = WatchlistEntry & {
   scraped_at?: string;
 };
 
+type Prediction = {
+  timeframe: "30 days" | "60 days" | "90 days";
+  category: "gtm" | "financial" | "security";
+  prediction: string;
+  reasoning: string;
+  confidence: "high" | "medium" | "low";
+  signal_direction: "positive" | "negative" | "neutral";
+};
+
+type PredictionsResult = {
+  predictions: Prediction[];
+  overall_trajectory?: string;
+  biggest_risk?: string;
+  biggest_opportunity?: string;
+  confidence?: string;
+  message?: string;
+  error?: string;
+};
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function inferDomain(value: string) {
@@ -41,6 +60,84 @@ function lastAnalyzed(entry: WatchlistEntry) {
   return enriched.last_analyzed_at || enriched.scraped_at || "";
 }
 
+function predictionArrow(direction: Prediction["signal_direction"]) {
+  if (direction === "positive") {
+    return "↑";
+  }
+  if (direction === "negative") {
+    return "↓";
+  }
+  return "→";
+}
+
+function categoryIcon(category: Prediction["category"]) {
+  if (category === "gtm") {
+    return "GTM";
+  }
+  if (category === "financial") {
+    return "$";
+  }
+  return "SEC";
+}
+
+function PredictionsPanel({ predictions }: { predictions: PredictionsResult }) {
+  if (predictions.message) {
+    return <p className="mt-4 border border-[#7C3AED]/40 bg-black p-4 text-sm text-zinc-500">{predictions.message}</p>;
+  }
+
+  return (
+    <div className="mt-5 border border-[#7C3AED]/40 bg-[#08060d] p-4">
+      <div className="mb-4 flex items-center gap-3">
+        <h4 className="text-sm font-bold text-zinc-100">PREDICTIVE INTELLIGENCE</h4>
+        <span className="border border-[#7C3AED]/40 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">LIVE</span>
+      </div>
+
+      {predictions.overall_trajectory && (
+        <div className="mb-4 border border-[#7C3AED]/40 bg-[#12091f] p-4">
+          <div className="text-[10px] font-bold text-[#7C3AED]">OVERALL TRAJECTORY</div>
+          <p className="mt-2 text-sm font-bold leading-6 text-zinc-100">{predictions.overall_trajectory}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-3">
+        {predictions.predictions.slice(0, 3).map((prediction, index) => (
+          <div className="border border-[#7C3AED]/40 bg-black p-4" key={`${prediction.timeframe}-${index}`}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="border border-[#7C3AED]/50 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+                  {prediction.timeframe}
+                </span>
+                <span className="border border-zinc-800 px-2 py-1 text-[10px] font-bold text-zinc-500">
+                  {categoryIcon(prediction.category)}
+                </span>
+              </div>
+              <span className="text-xl font-bold text-[#7C3AED]">{predictionArrow(prediction.signal_direction)}</span>
+            </div>
+            <p className="mt-3 text-sm font-bold leading-6 text-zinc-100">{prediction.prediction}</p>
+            <p className="mt-2 text-xs leading-5 text-zinc-500">{prediction.reasoning}</p>
+            <div className="mt-3 inline-flex border border-[#7C3AED]/40 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+              {prediction.confidence.toUpperCase()} CONFIDENCE
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="border border-red-500/40 bg-black p-4">
+          <div className="text-[10px] font-bold text-red-500">⚠️ BIGGEST RISK</div>
+          <p className="mt-2 text-xs leading-5 text-zinc-400">{predictions.biggest_risk}</p>
+        </div>
+        <div className="border border-[#1D9E75]/40 bg-black p-4">
+          <div className="text-[10px] font-bold text-[#1D9E75]">🚀 BIGGEST OPPORTUNITY</div>
+          <p className="mt-2 text-xs leading-5 text-zinc-400">{predictions.biggest_opportunity}</p>
+        </div>
+      </div>
+
+      <p className="mt-4 text-[10px] text-zinc-600">Predictions based on pattern analysis. Not financial advice.</p>
+    </div>
+  );
+}
+
 export default function WatchlistPage() {
   const [company, setCompany] = useState("");
   const [domain, setDomain] = useState("");
@@ -52,6 +149,10 @@ export default function WatchlistPage() {
   const [formError, setFormError] = useState("");
   const [listError, setListError] = useState("");
   const [removingCompany, setRemovingCompany] = useState("");
+  const [expandedDomain, setExpandedDomain] = useState("");
+  const [loadingPredictionDomain, setLoadingPredictionDomain] = useState("");
+  const [predictionsByDomain, setPredictionsByDomain] = useState<Record<string, PredictionsResult>>({});
+  const [predictionErrorsByDomain, setPredictionErrorsByDomain] = useState<Record<string, string>>({});
 
   const inferredDomain = useMemo(() => inferDomain(company), [company]);
   const resolvedDomain = useMemo(() => domain.trim() || inferDomain(company), [company, domain]);
@@ -157,6 +258,43 @@ export default function WatchlistPage() {
       setListError(caughtError instanceof Error ? caughtError.message : "Failed to remove watchlist entry.");
     } finally {
       setRemovingCompany("");
+    }
+  }
+
+  async function handleViewPredictions(entry: WatchlistEntry) {
+    if (expandedDomain === entry.domain) {
+      setExpandedDomain("");
+      return;
+    }
+
+    setExpandedDomain(entry.domain);
+
+    if (predictionsByDomain[entry.domain]) {
+      return;
+    }
+
+    setPredictionErrorsByDomain((current) => ({ ...current, [entry.domain]: "" }));
+    setLoadingPredictionDomain(entry.domain);
+
+    try {
+      const response = await fetch(`${apiUrl}/predictions/${encodeURIComponent(entry.domain)}`);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || "Prediction analysis failed.");
+      }
+
+      const payload = (await response.json()) as PredictionsResult;
+      if (payload.error) {
+        throw new Error(payload.error);
+      }
+      setPredictionsByDomain((current) => ({ ...current, [entry.domain]: payload }));
+    } catch (caughtError) {
+      setPredictionErrorsByDomain((current) => ({
+        ...current,
+        [entry.domain]: caughtError instanceof Error ? caughtError.message : "Prediction analysis failed."
+      }));
+    } finally {
+      setLoadingPredictionDomain("");
     }
   }
 
@@ -274,6 +412,14 @@ export default function WatchlistPage() {
                         ANALYZE NOW
                       </Link>
                       <button
+                        className="h-9 border border-[#7C3AED]/60 px-3 text-xs font-bold text-[#7C3AED] transition hover:bg-[#7C3AED] hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={loadingPredictionDomain === entry.domain}
+                        onClick={() => handleViewPredictions(entry)}
+                        type="button"
+                      >
+                        {loadingPredictionDomain === entry.domain ? "LOADING..." : "VIEW PREDICTIONS"}
+                      </button>
+                      <button
                         className="h-9 border border-red-500/50 px-3 text-xs font-bold text-red-500 transition hover:bg-red-500 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
                         disabled={removingCompany === entry.company}
                         onClick={() => handleRemove(entry)}
@@ -283,6 +429,24 @@ export default function WatchlistPage() {
                       </button>
                     </div>
                   </div>
+
+                  {expandedDomain === entry.domain && (
+                    <>
+                      {loadingPredictionDomain === entry.domain && (
+                        <p className="mt-4 border border-[#7C3AED]/40 bg-black p-4 text-sm text-[#7C3AED]">
+                          🔮 Analyzing patterns...
+                        </p>
+                      )}
+                      {predictionErrorsByDomain[entry.domain] && (
+                        <p className="mt-4 border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">
+                          {predictionErrorsByDomain[entry.domain]}
+                        </p>
+                      )}
+                      {predictionsByDomain[entry.domain] && (
+                        <PredictionsPanel predictions={predictionsByDomain[entry.domain]} />
+                      )}
+                    </>
+                  )}
                 </article>
               );
             })}

@@ -2,8 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-base: #080808;
+  --bg-surface: #0f0f0f;
+  --bg-elevated: #161616;
+  --bg-hover: #1a1a1a;
+  --border-subtle: #1f1f1f;
+  --border-default: #2a2a2a;
+  --border-strong: #383838;
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #505050;
+  --accent: #00D97E;
+  --accent-dim: #00D97E20;
+  --accent-glow: 0 0 20px #00D97E30;
+  --purple: #7C3AED;
+  --purple-dim: #7C3AED20;
+  --red: #FF4444;
+  --amber: #F5A623;
+}
+
 html, body {
-  background: #0a0a0a;
+  background: var(--bg-base);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -11,12 +32,53 @@ html, body {
   box-sizing: border-box;
 }
 
+::selection {
+  background: var(--accent-dim);
+  color: var(--text-primary);
+}
+
+.font-geist {
+  font-family: var(--font-geist);
+}
+
+.font-inter {
+  font-family: var(--font-inter);
+}
+
+.font-mono {
+  font-family: var(--font-jetbrains-mono);
+}
+
 .terminal-typewriter {
   animation: terminal-type 1.1s steps(48, end);
 }
 
-.fade-in {
-  animation: fade-in 420ms ease-out both;
+.scanlines::after {
+  animation: scanline-shift 8s linear infinite;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.025),
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  content: "";
+  inset: 0;
+  opacity: 0.25;
+  pointer-events: none;
+  position: absolute;
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.gradient-prediction {
+  background: linear-gradient(90deg, var(--purple), var(--accent));
+  background-size: 160% 100%;
+  -webkit-background-clip: text;
+  animation: gradient-slide 4s ease-in-out infinite;
+  color: transparent;
 }
 
 @keyframes terminal-type {
@@ -24,7 +86,26 @@ html, body {
   to { max-width: 100%; }
 }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes scanline-shift {
+  from { transform: translateY(0); }
+  to { transform: translateY(16px); }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { background-color: var(--bg-elevated); }
+  50% { background-color: var(--bg-hover); }
+}
+
+@keyframes gradient-slide {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }
