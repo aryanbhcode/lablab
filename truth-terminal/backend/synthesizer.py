@@ -7,7 +7,7 @@ from anthropic import AsyncAnthropic
 from dotenv import load_dotenv
 
 
-MODEL = "claude-sonnet-4-20250514"
+MODEL="claude-sonnet-4-5"
 
 load_dotenv()
 

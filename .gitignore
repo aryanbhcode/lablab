@@ -1,3 +1,10 @@
 node_modules/
 .env
 **/.env
+.next/
+**/.next/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.db
+test-output.css

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Signal = {
@@ -153,6 +154,19 @@ export default function Page() {
   const resolvedDomain = useMemo(() => domain.trim() || inferDomain(company), [company, domain]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextCompany = params.get("company") || "";
+    const nextDomain = params.get("domain") || "";
+
+    if (nextCompany) {
+      setCompany(nextCompany);
+    }
+    if (nextDomain) {
+      setDomain(nextDomain);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isLoading) {
       setLoadingLines([]);
       return;
@@ -275,9 +289,19 @@ export default function Page() {
         <div className="text-sm font-semibold text-zinc-100">
           CORPORATE TRUTH TERMINAL
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-[#1D9E75]">
-          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#1D9E75]" />
-          LIVE
+        <div className="flex items-center gap-5">
+          <nav className="flex items-center gap-4 text-xs font-bold">
+            <Link className="text-[#1D9E75]" href="/">
+              ANALYZE
+            </Link>
+            <Link className="text-zinc-500 transition hover:text-zinc-300" href="/watchlist">
+              WATCHLIST
+            </Link>
+          </nav>
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#1D9E75]">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#1D9E75]" />
+            LIVE
+          </div>
         </div>
       </header>
 

@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from database import add_to_watchlist, delete_from_watchlist, get_watchlist, init_db
 from scraper import scrape_jobs, scrape_news, scrape_pricing, scrape_reviews
 from synthesizer import synthesize
 
@@ -22,6 +23,7 @@ ENV_VARS = [
     "BRIGHTDATA_API_TOKEN",
     "BRIGHTDATA_ZONE",
     "BRIGHTDATA_SERP_ZONE",
+    "RESEND_API_KEY",
 ]
 
 load_dotenv()
@@ -30,6 +32,12 @@ load_dotenv()
 class AnalyzeRequest(BaseModel):
     company: str = Field(..., min_length=1, max_length=100)
     domain: str = Field(..., min_length=3)
+
+
+class WatchlistRequest(BaseModel):
+    company: str = Field(..., min_length=1, max_length=100)
+    domain: str = Field(..., min_length=3)
+    email: str = Field(..., min_length=3)
 
 
 def _iso_now() -> str:
@@ -42,6 +50,10 @@ def _stream_event(event: str, data: dict[str, Any]) -> str:
 
 def _log(message: str) -> None:
     print(f"[truth-terminal] {message}", flush=True)
+
+
+def _normalize_domain(domain: str) -> str:
+    return domain.strip().removeprefix("https://").removeprefix("http://").strip("/")
 
 
 async def _timed_call(
@@ -82,6 +94,50 @@ async def _timed_call(
         return {"error": str(exc), "data": None}
 
 
+async def _scrape_all(
+    company: str,
+    domain: str,
+    queue: asyncio.Queue[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    jobs, reviews, pricing, news = await asyncio.gather(
+        _timed_call("scrape_jobs", scrape_jobs(company, domain), queue),
+        _timed_call("scrape_reviews", scrape_reviews(company), queue),
+        _timed_call("scrape_pricing", scrape_pricing(domain), queue),
+        _timed_call("scrape_news", scrape_news(company), queue),
+    )
+
+    return {
+        "jobs": jobs,
+        "reviews": reviews,
+        "pricing": pricing,
+        "news": news,
+    }
+
+
+async def run_analysis(company: str, domain: str) -> dict[str, Any]:
+    started = perf_counter()
+    scraped_at = _iso_now()
+
+    _log(f"analysis started for company={company} domain={domain}")
+    scraped_data = await _scrape_all(company, domain)
+
+    synthesis_started = perf_counter()
+    _log("synthesis started")
+    synthesis = await synthesize(company, scraped_data)
+    synthesis_elapsed = perf_counter() - synthesis_started
+    _log(f"synthesis completed in {synthesis_elapsed:.2f}s")
+
+    elapsed = perf_counter() - started
+    _log(f"analysis completed in {elapsed:.2f}s")
+
+    return {
+        **synthesis,
+        "scraped_at": scraped_at,
+        "company": company,
+        "domain": domain,
+    }
+
+
 async def _analyze_stream(company: str, domain: str) -> AsyncGenerator[str, None]:
     started = perf_counter()
     scraped_at = _iso_now()
@@ -90,25 +146,13 @@ async def _analyze_stream(company: str, domain: str) -> AsyncGenerator[str, None
     yield _stream_event("step", {"step": "scraping", "status": "started", "timestamp": _iso_now()})
 
     scrape_events: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
-    scrape_tasks = asyncio.gather(
-        _timed_call("scrape_jobs", scrape_jobs(company, domain), scrape_events),
-        _timed_call("scrape_reviews", scrape_reviews(company), scrape_events),
-        _timed_call("scrape_pricing", scrape_pricing(domain), scrape_events),
-        _timed_call("scrape_news", scrape_news(company), scrape_events),
-    )
+    scrape_tasks = asyncio.create_task(_scrape_all(company, domain, scrape_events))
 
     for _ in range(4):
         event = await scrape_events.get()
         yield _stream_event("step", event)
 
-    jobs, reviews, pricing, news = await scrape_tasks
-
-    scraped_data = {
-        "jobs": jobs,
-        "reviews": reviews,
-        "pricing": pricing,
-        "news": news,
-    }
+    scraped_data = await scrape_tasks
 
     yield _stream_event(
         "step",
@@ -159,6 +203,10 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def startup_message() -> None:
+        init_db()
+        from scheduler import start_scheduler
+
+        start_scheduler()
         loaded = [name for name in ENV_VARS if os.getenv(name)]
         missing = [name for name in ENV_VARS if not os.getenv(name)]
         _log("startup complete")
@@ -184,7 +232,7 @@ def create_app() -> FastAPI:
     @app.post("/analyze")
     async def analyze(payload: AnalyzeRequest) -> StreamingResponse:
         company = payload.company.strip()
-        domain = payload.domain.strip().removeprefix("https://").removeprefix("http://").strip("/")
+        domain = _normalize_domain(payload.domain)
 
         if len(company) > 100:
             raise HTTPException(status_code=422, detail="company must be 100 characters or fewer")
@@ -195,6 +243,29 @@ def create_app() -> FastAPI:
             _analyze_stream(company, domain),
             media_type="application/x-ndjson",
         )
+
+    @app.post("/watchlist")
+    async def create_watchlist_entry(payload: WatchlistRequest) -> dict[str, Any]:
+        company = payload.company.strip()
+        domain = _normalize_domain(payload.domain)
+        email = payload.email.strip()
+
+        if "." not in domain:
+            raise HTTPException(status_code=422, detail="domain must contain a dot")
+        if "@" not in email:
+            raise HTTPException(status_code=422, detail="email must contain @")
+
+        row_id = add_to_watchlist(company, domain, email)
+        return {"success": True, "id": row_id}
+
+    @app.get("/watchlist")
+    async def list_watchlist_entries() -> list[dict[str, Any]]:
+        return get_watchlist()
+
+    @app.delete("/watchlist/{company}")
+    async def remove_watchlist_entry(company: str) -> dict[str, Any]:
+        deleted_count = delete_from_watchlist(company)
+        return {"success": True, "deleted_count": deleted_count}
 
     return app
 
