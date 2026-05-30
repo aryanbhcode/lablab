@@ -103,7 +103,7 @@ function inferDomain(value: string) {
 
 function scoreColor(score: number) {
   if (score > 75) {
-    return "text-[#1D9E75]";
+    return "text-[#c084fc]";
   }
   if (score >= 50) {
     return "text-amber-400";
@@ -113,7 +113,7 @@ function scoreColor(score: number) {
 
 function scoreBarColor(score: number) {
   if (score > 75) {
-    return "bg-[#1D9E75]";
+    return "bg-[#c084fc]";
   }
   if (score >= 50) {
     return "bg-amber-400";
@@ -124,9 +124,9 @@ function scoreBarColor(score: number) {
 function signalAccent(severity: Signal["severity"]) {
   if (severity === "positive") {
     return {
-      border: "border-[#1D9E75]/40",
+      border: "border-[#c084fc]/40",
       icon: "✓",
-      iconClass: "border-[#1D9E75]/40 text-[#1D9E75]"
+      iconClass: "border-[#c084fc]/40 text-[#c084fc]"
     };
   }
   if (severity === "warning") {
@@ -153,11 +153,11 @@ function ScoreCard({
   summary: string;
 }) {
   return (
-    <div className="border border-zinc-900 bg-black p-5">
-      <div className="text-xs font-semibold text-zinc-500">{label}</div>
+    <div className="border border-[#4f3f78] bg-white p-5">
+      <div className="text-xs font-semibold text-[#cfc4e9]">{label}</div>
       <div className={`mt-4 text-5xl font-bold ${scoreColor(score)}`}>{score}</div>
-      <p className="mt-3 min-h-10 text-sm leading-5 text-zinc-400">{summary}</p>
-      <div className="mt-5 h-1.5 w-full bg-zinc-900">
+      <p className="mt-3 min-h-10 text-sm leading-5 text-[#cfc4e9]">{summary}</p>
+      <div className="mt-5 h-1.5 w-full bg-[#4f3f78]">
         <div className={`h-full ${scoreBarColor(score)}`} style={{ width: `${Math.max(0, Math.min(score, 100))}%` }} />
       </div>
     </div>
@@ -168,7 +168,7 @@ function SignalCard({ signal }: { signal: Signal }) {
   const accent = signalAccent(signal.severity);
 
   return (
-    <div className={`border bg-black p-5 ${accent.border}`}>
+    <div className={`border bg-white p-5 ${accent.border}`}>
       <div className="flex gap-4">
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center border text-sm font-bold ${accent.iconClass}`}
@@ -177,9 +177,9 @@ function SignalCard({ signal }: { signal: Signal }) {
           {accent.icon}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold text-zinc-100">{signal.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-zinc-400">{signal.detail}</p>
-          <div className="mt-4 inline-flex max-w-full border border-zinc-800 px-2 py-1 text-[10px] text-zinc-500">
+          <h3 className="text-base font-bold text-[#f6f0ff]">{signal.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-[#cfc4e9]">{signal.detail}</p>
+          <div className="mt-4 inline-flex max-w-full border border-[#4f3f78] px-2 py-1 text-[10px] text-[#cfc4e9]">
             <span className="truncate">{signal.source}</span>
           </div>
         </div>
@@ -210,21 +210,21 @@ function categoryIcon(category: Prediction["category"]) {
 
 function PredictionCard({ prediction }: { prediction: Prediction }) {
   return (
-    <div className="border border-[#7C3AED]/40 bg-black p-5">
+    <div className="border border-[#9b5cff]/40 bg-white p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2">
-          <span className="border border-[#7C3AED]/50 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+          <span className="border border-[#9b5cff]/50 px-2 py-1 text-[10px] font-bold text-[#9b5cff]">
             {prediction.timeframe}
           </span>
-          <span className="border border-zinc-800 px-2 py-1 text-[10px] font-bold text-zinc-500">
+          <span className="border border-[#4f3f78] px-2 py-1 text-[10px] font-bold text-[#cfc4e9]">
             {categoryIcon(prediction.category)}
           </span>
         </div>
-        <span className="text-2xl font-bold text-[#7C3AED]">{predictionArrow(prediction.signal_direction)}</span>
+        <span className="text-2xl font-bold text-[#9b5cff]">{predictionArrow(prediction.signal_direction)}</span>
       </div>
-      <h3 className="mt-5 text-lg font-bold leading-6 text-zinc-100">{prediction.prediction}</h3>
-      <p className="mt-3 text-sm leading-6 text-zinc-400">{prediction.reasoning}</p>
-      <div className="mt-5 inline-flex border border-[#7C3AED]/40 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+      <h3 className="mt-5 text-lg font-bold leading-6 text-[#f6f0ff]">{prediction.prediction}</h3>
+      <p className="mt-3 text-sm leading-6 text-[#cfc4e9]">{prediction.reasoning}</p>
+      <div className="mt-5 inline-flex border border-[#9b5cff]/40 px-2 py-1 text-[10px] font-bold text-[#9b5cff]">
         {prediction.confidence.toUpperCase()} CONFIDENCE
       </div>
     </div>
@@ -241,22 +241,22 @@ function PredictiveIntelligence({
   error: string;
 }) {
   return (
-    <section className="border border-[#7C3AED]/40 bg-black p-5">
+    <section className="border border-[#9b5cff]/40 bg-white p-5">
       <div className="mb-5 flex items-center gap-3">
-        <h2 className="text-xl font-bold text-zinc-100">PREDICTIVE INTELLIGENCE</h2>
-        <span className="border border-[#7C3AED]/40 px-2 py-1 text-xs font-bold text-[#7C3AED]">BETA</span>
+        <h2 className="text-xl font-bold text-[#f6f0ff]">PREDICTIVE INTELLIGENCE</h2>
+        <span className="border border-[#9b5cff]/40 px-2 py-1 text-xs font-bold text-[#9b5cff]">BETA</span>
       </div>
 
-      {isLoading && <p className="text-sm text-[#7C3AED]">🔮 Analyzing patterns...</p>}
+      {isLoading && <p className="text-sm text-[#9b5cff]">🔮 Analyzing patterns...</p>}
       {error && <p className="border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{error}</p>}
 
-      {!isLoading && predictions?.message && <p className="text-sm text-zinc-500">{predictions.message}</p>}
+      {!isLoading && predictions?.message && <p className="text-sm text-[#cfc4e9]">{predictions.message}</p>}
 
       {!isLoading && predictions && predictions.predictions.length > 0 && (
         <div className="space-y-5">
-          <div className="border border-[#7C3AED]/40 bg-[#12091f] p-5">
-            <div className="text-xs font-bold text-[#7C3AED]">OVERALL TRAJECTORY</div>
-            <p className="mt-3 text-lg font-bold leading-7 text-zinc-100">{predictions.overall_trajectory}</p>
+          <div className="border border-[#9b5cff]/40 bg-[#171126] p-5">
+            <div className="text-xs font-bold text-[#9b5cff]">OVERALL TRAJECTORY</div>
+            <p className="mt-3 text-lg font-bold leading-7 text-[#f6f0ff]">{predictions.overall_trajectory}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
@@ -266,17 +266,17 @@ function PredictiveIntelligence({
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="border border-red-500/40 bg-black p-5">
+            <div className="border border-red-500/40 bg-white p-5">
               <div className="text-xs font-bold text-red-500">⚠️ BIGGEST RISK</div>
-              <p className="mt-3 text-sm leading-6 text-zinc-300">{predictions.biggest_risk}</p>
+              <p className="mt-3 text-sm leading-6 text-[#2f4445]">{predictions.biggest_risk}</p>
             </div>
-            <div className="border border-[#1D9E75]/40 bg-black p-5">
-              <div className="text-xs font-bold text-[#1D9E75]">🚀 BIGGEST OPPORTUNITY</div>
-              <p className="mt-3 text-sm leading-6 text-zinc-300">{predictions.biggest_opportunity}</p>
+            <div className="border border-[#c084fc]/40 bg-white p-5">
+              <div className="text-xs font-bold text-[#c084fc]">🚀 BIGGEST OPPORTUNITY</div>
+              <p className="mt-3 text-sm leading-6 text-[#2f4445]">{predictions.biggest_opportunity}</p>
             </div>
           </div>
 
-          <p className="text-[10px] text-zinc-600">Predictions based on pattern analysis. Not financial advice.</p>
+          <p className="text-[10px] text-[#9484b8]">Predictions based on pattern analysis. Not financial advice.</p>
         </div>
       )}
     </section>
@@ -309,10 +309,10 @@ function sentinelRiskClasses(riskLevel: SentinelResult["risk_level"]) {
     };
   }
   return {
-    header: "bg-[#1D9E75]",
-    border: "border-[#1D9E75]",
-    text: "text-[#1D9E75]",
-    fill: "bg-[#1D9E75]"
+    header: "bg-[#c084fc]",
+    border: "border-[#c084fc]",
+    text: "text-[#c084fc]",
+    fill: "bg-[#c084fc]"
   };
 }
 
@@ -329,7 +329,7 @@ function SentinelMode({
 }) {
   if (isLoading) {
     return (
-      <section className="border border-red-950 bg-black p-5">
+      <section className="border border-red-950 bg-white p-5">
         <p className="text-sm text-red-400">🔍 Scanning for collapse patterns...</p>
       </section>
     );
@@ -348,14 +348,14 @@ function SentinelMode({
 
   if (sentinel.risk_level === "LOW") {
     return (
-      <section className="border border-[#1D9E75]/40 bg-[#1D9E75]/10 p-4 text-sm text-[#1D9E75]">
+      <section className="border border-[#c084fc]/40 bg-[#c084fc]/10 p-4 text-sm text-[#c084fc]">
         ✓ SENTINEL CLEAR — No collapse patterns detected for {company}
       </section>
     );
   }
 
   return (
-    <section className={`overflow-hidden border ${classes.border} bg-black`}>
+    <section className={`overflow-hidden border ${classes.border} bg-white`}>
       <div className={`${classes.header} p-5`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-3xl font-black text-white">⚠ SENTINEL ALERT</h2>
@@ -367,14 +367,14 @@ function SentinelMode({
 
       <div className="space-y-5 p-5">
         <div className="border border-red-950 bg-[#130303] p-5">
-          <div className="text-sm font-bold text-zinc-500">MATCHES</div>
-          <div className="mt-2 text-3xl font-black text-zinc-100">{pattern.name}</div>
+          <div className="text-sm font-bold text-[#cfc4e9]">MATCHES</div>
+          <div className="mt-2 text-3xl font-black text-[#f6f0ff]">{pattern.name}</div>
           <div className={`mt-4 text-7xl font-black ${classes.text}`}>{pattern.match_percentage}%</div>
-          <div className="mt-2 text-sm font-bold text-zinc-500">PATTERN MATCH</div>
-          <p className="mt-4 text-sm leading-6 text-zinc-400">
+          <div className="mt-2 text-sm font-bold text-[#cfc4e9]">PATTERN MATCH</div>
+          <p className="mt-4 text-sm leading-6 text-[#cfc4e9]">
             Historical precedent: {(pattern.historical_examples || []).join(" · ")}
           </p>
-          <p className="mt-1 text-sm leading-6 text-zinc-400">
+          <p className="mt-1 text-sm leading-6 text-[#cfc4e9]">
             Average time before collapse in historical cases: {pattern.avg_weeks_before_collapse} weeks
           </p>
         </div>
@@ -386,11 +386,11 @@ function SentinelMode({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {(pattern.matched_signals || []).map((signal) => (
             <div className="border border-red-950 bg-[#090303] p-4" key={signal.signal_id}>
-              <h3 className="text-sm font-bold text-zinc-100">{signal.description}</h3>
-              <div className="mt-3 h-2 bg-zinc-900">
+              <h3 className="text-sm font-bold text-[#f6f0ff]">{signal.description}</h3>
+              <div className="mt-3 h-2 bg-[#4f3f78]">
                 <div className={`h-full ${classes.fill}`} style={{ width: `${Math.round(signal.score * 100)}%` }} />
               </div>
-              <p className="mt-3 text-xs leading-5 text-zinc-500">{signal.evidence}</p>
+              <p className="mt-3 text-xs leading-5 text-[#cfc4e9]">{signal.evidence}</p>
             </div>
           ))}
         </div>
@@ -398,22 +398,117 @@ function SentinelMode({
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {sentinel.all_patterns.map((item) => (
             <div
-              className={`border p-4 ${item.id === pattern.id ? `${classes.border} bg-red-950/20` : "border-zinc-900 bg-black"}`}
+              className={`border p-4 ${item.id === pattern.id ? `${classes.border} bg-red-950/20` : "border-[#4f3f78] bg-white"}`}
               key={item.id}
             >
-              <div className="text-xs font-bold text-zinc-500">{item.name}</div>
-              <div className={`mt-2 text-2xl font-black ${item.id === pattern.id ? classes.text : "text-zinc-400"}`}>
+              <div className="text-xs font-bold text-[#cfc4e9]">{item.name}</div>
+              <div className={`mt-2 text-2xl font-black ${item.id === pattern.id ? classes.text : "text-[#cfc4e9]"}`}>
                 {item.match_percentage}%
               </div>
             </div>
           ))}
         </div>
 
-        <p className="text-[10px] leading-5 text-zinc-600">
+        <p className="text-[10px] leading-5 text-[#9484b8]">
           SENTINEL pattern matching is based on historical precedent analysis. Not financial advice. For informational purposes only.
         </p>
       </div>
     </section>
+  );
+}
+
+function IntelligenceGraphic({
+  mode = "analyze"
+}: {
+  mode?: "analyze" | "results";
+}) {
+  return (
+    <div className="institutional-hero-panel relative overflow-hidden p-10">
+      <span className="cosmic-spark left-[16%] top-[18%] h-2 w-2" />
+      <span className="cosmic-spark right-[30%] top-[12%] h-1.5 w-1.5" />
+      <span className="cosmic-spark bottom-[22%] left-[42%] h-1.5 w-1.5" />
+      <span className="cosmic-orb right-[18%] top-[24%] h-20 w-20" />
+      <span className="cosmic-orb bottom-[18%] left-[18%] h-12 w-12" />
+      <div className="relative z-10 flex h-full max-w-[70%] flex-col justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.26em] text-[#f4c95d]">
+            {mode === "results" ? "Evidence engine" : "Truth systems"}
+          </p>
+          <h2 className="mt-8 text-4xl font-black leading-tight">
+            {mode === "results" ? "Signals are weighed, cross-checked, then scored." : "Risk signals, public evidence, anomaly trails."}
+          </h2>
+        </div>
+        <div className="grid gap-4 text-sm text-white/75">
+          <p>Every score is backed by source categories: hiring, reviews, pricing, news and security posture.</p>
+          <p>Sentinel mode watches for historical collapse patterns without slowing the core analysis run.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BlueprintLoader({ lines }: { lines: string[] }) {
+  const progressRatio = Math.max(0.08, Math.min(lines.length / loadingMessages.length, 0.96));
+  const currentStep = Math.max(1, Math.min(4, Math.ceil(progressRatio * 4)));
+
+  return (
+    <div className="progress-lab w-full p-6 sm:p-8">
+      <div className="relative z-10 grid min-w-0 gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+        <div className="min-w-0">
+          <div className="mb-8 flex items-center justify-between text-xs font-black uppercase tracking-[0.2em] text-[#c6c0b2]">
+            <span>truth-terminal://analysis</span>
+            <span className="text-[#f4c95d]">Running</span>
+          </div>
+          <div className="progress-track">
+            <div className="h-full rounded-full bg-gradient-to-r from-[#5b21b6] to-[#9b5cff] transition-[width] duration-700" style={{ width: `${progressRatio * 100}%` }} />
+          </div>
+          <div className="mt-12 flex items-center">
+            {[1, 2, 3, 4].map((step) => (
+              <div className="flex flex-1 items-center" key={step}>
+                <div className={`step-node ${step === currentStep ? "active" : ""}`}>{step < currentStep ? "✓" : step}</div>
+                {step < 4 && <div className="h-0.5 flex-1 bg-[#f4c95d]/70" />}
+              </div>
+            ))}
+          </div>
+          <div className="scan-orbit mt-10 overflow-hidden border border-white/10 bg-black/20">
+            <span className="scan-dot" />
+            <span className="scan-dot" />
+            <span className="scan-dot" />
+            <span className="scan-beam" />
+            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+              <div>
+                <div className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-[#c6c0b2]">Source orbit</div>
+                <div className="mt-1 text-xs text-[#c6c0b2]">Jobs · Reviews · News · Pricing</div>
+              </div>
+              <div className="text-3xl font-black text-[#f4c95d]">{Math.min(lines.length, loadingMessages.length)}/{loadingMessages.length}</div>
+            </div>
+          </div>
+        </div>
+        <div className="relative min-w-0">
+          <div className="absolute left-4 top-10 h-[72%] w-px bg-[#f4c95d]/50" />
+          <div className="space-y-4 pl-10 pr-2">
+            {lines.map((message, index) => (
+              <div
+                className="loader-line break-words text-sm leading-7 text-[#fffaf0]"
+                key={`${message}-${index}`}
+                style={{ animationDelay: `${index * 90}ms` }}
+              >
+                <span className="text-[#f4c95d]">{message.slice(0, 1)}</span>
+                {message.slice(1)}
+              </div>
+            ))}
+          </div>
+          <div className="relative ml-10 mt-10 h-28 max-w-xl">
+            <div className="loading-data-line absolute bottom-4 left-0 h-2 w-[58%] rounded-full bg-[#f4c95d]" />
+            <div className="loading-data-line absolute bottom-10 left-[12%] h-2 w-[78%] rounded-full bg-white/85" />
+            <div className="loading-data-line absolute bottom-16 left-[28%] h-2 w-[54%] rounded-full bg-[#9b5cff]" />
+            <div className="absolute bottom-0 left-[22%] h-28 w-px bg-[#f4c95d]/60" />
+            <div className="absolute bottom-0 left-[48%] h-28 w-px bg-[#f4c95d]/60" />
+            <div className="absolute bottom-0 left-[74%] h-28 w-px bg-[#f4c95d]/60" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -454,13 +549,17 @@ export default function Page() {
       return;
     }
 
-    setLoadingLines([loadingMessages[0]]);
-    let messageIndex = 1;
+    setLoadingLines([]);
+    let messageIndex = 0;
     const interval = window.setInterval(() => {
-      const nextMessage = loadingMessages[messageIndex % loadingMessages.length];
+      const nextMessage = loadingMessages[messageIndex];
       messageIndex += 1;
-      setLoadingLines((current) => [...current.slice(-9), nextMessage]);
-    }, 1500);
+      if (nextMessage) {
+        setLoadingLines((current) => [...current, nextMessage]);
+      } else {
+        window.clearInterval(interval);
+      }
+    }, 1450);
 
     return () => window.clearInterval(interval);
   }, [isLoading]);
@@ -640,94 +739,143 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-zinc-100">
-      <header className="flex h-16 items-center justify-between border-b border-zinc-900 px-5 sm:px-8">
-        <div className="text-sm font-semibold text-zinc-100">
-          CORPORATE TRUTH TERMINAL
+    <main className="institutional-shell min-h-screen">
+      <header className="institutional-header sticky top-0 z-20 flex min-h-[92px] items-center justify-between px-6 sm:px-12">
+        <div>
+          <div className="text-lg font-black tracking-[0.28em] text-white">CORPORATE TRUTH TERMINAL</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#cfc4e9]">
+            Public web intelligence for company risk
+          </div>
         </div>
         <div className="flex items-center gap-5">
           <nav className="flex items-center gap-4 text-xs font-bold">
-            <Link className="text-[#1D9E75]" href="/">
+            <Link className="text-[#f4c95d]" href="/">
               ANALYZE
             </Link>
-            <Link className="text-zinc-500 transition hover:text-zinc-300" href="/watchlist">
+            <Link className="text-[#cfc4e9] transition hover:text-[#2f4445]" href="/watchlist">
               WATCHLIST
             </Link>
-            <Link className="text-zinc-500 transition hover:text-zinc-300" href="/battle-map">
+            <Link className="text-[#cfc4e9] transition hover:text-[#2f4445]" href="/battle-map">
               BATTLE MAP
             </Link>
           </nav>
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#1D9E75]">
-            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#1D9E75]" />
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#f4c95d]">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#f4c95d]" />
             LIVE
           </div>
         </div>
       </header>
 
-      <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col justify-center px-5 py-12 sm:px-8">
+      <section className="mx-auto flex min-h-[calc(100vh-92px)] w-full max-w-7xl flex-col justify-center px-6 py-12 sm:px-12">
         {!isLoading && !result && (
-          <div className="w-full">
-            <p className="mb-8 text-4xl font-bold leading-tight text-zinc-100 sm:text-6xl">
-              WHAT DOES THE INTERNET KNOW ABOUT...
-            </p>
+          <div className="grid w-full items-stretch gap-10 lg:grid-cols-[1fr_0.92fr]">
+            <div className="py-8">
+              <p className="institutional-section-label mb-5">Competitive intelligence</p>
+              <h1 className="max-w-3xl text-5xl font-black leading-[0.98] tracking-tight text-[#f6f0ff] sm:text-7xl">
+                Decode the company before the market does.
+              </h1>
+              <p className="mt-7 max-w-2xl text-lg leading-8 text-[#cfc4e9]">
+                Pull live public evidence into a focused risk readout: momentum, money pressure, security exposure and collapse-pattern drift.
+              </p>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <input
-                className="h-14 w-full border border-zinc-800 bg-black px-4 text-base text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-[#1D9E75]"
-                maxLength={100}
-                onChange={(event) => setCompany(event.target.value)}
-                placeholder="try: stripe.com"
-                value={company}
-              />
-
-              {!inferredDomain && (
+              <form className="institutional-card mt-10 grid gap-3 p-3 sm:grid-cols-[1fr_auto]" onSubmit={handleSubmit}>
                 <input
-                  className="h-14 w-full border border-zinc-800 bg-black px-4 text-base text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-[#1D9E75]"
-                  onChange={(event) => setDomain(event.target.value)}
-                  placeholder="domain if not already above"
-                  value={domain}
+                  className="institutional-field h-16 px-5 text-lg outline-none transition placeholder:text-[#9484b8]"
+                  maxLength={100}
+                  onChange={(event) => setCompany(event.target.value)}
+                  placeholder="try: stripe.com"
+                  value={company}
                 />
-              )}
 
-              <button
-                className="h-14 w-full bg-[#1D9E75] text-sm font-bold text-black transition hover:bg-[#22ba8a] disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isLoading}
-                type="submit"
-              >
-                ANALYZE
-              </button>
-            </form>
+                {!inferredDomain && (
+                  <input
+                    className="institutional-field h-16 px-5 text-lg outline-none transition placeholder:text-[#9484b8] sm:col-span-2"
+                    onChange={(event) => setDomain(event.target.value)}
+                    placeholder="domain if not already above"
+                    value={domain}
+                  />
+                )}
 
-            <p className="mt-4 text-center text-xs text-zinc-500">
-              Pulls live data from LinkedIn, Glassdoor, news, pricing pages & more
-            </p>
+                <button
+                  className="cosmic-cta h-16 px-8 text-sm font-black uppercase tracking-[0.16em] text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isLoading}
+                  type="submit"
+                >
+                  Analyze →
+                </button>
+              </form>
+
+              <p className="mt-4 text-sm text-[#cfc4e9]">
+                Live scan: jobs, reviews, pricing, news, source confidence and Sentinel collapse patterns.
+              </p>
+            </div>
+
+            <IntelligenceGraphic />
 
             {error && <p className="mt-5 border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{error}</p>}
           </div>
         )}
 
         {isLoading && (
-          <div className="w-full border border-zinc-900 bg-black p-5 shadow-2xl shadow-black">
-            <div className="mb-4 flex items-center justify-between border-b border-zinc-900 pb-3 text-xs text-zinc-500">
-              <span>truth-terminal://analysis</span>
-              <span className="text-[#1D9E75]">RUNNING</span>
-            </div>
-            <div className="min-h-72 space-y-3 text-sm text-[#1D9E75] sm:text-base">
-              {loadingLines.map((message, index) => (
-                <div className="terminal-typewriter overflow-hidden whitespace-nowrap" key={`${message}-${index}`}>
-                  {message}
-                </div>
-              ))}
-            </div>
-          </div>
+          <BlueprintLoader lines={loadingLines} />
         )}
 
         {!isLoading && result && (
           <div className="fade-in w-full space-y-8" ref={resultsRef}>
-            <section className="text-center">
-              <div className="text-8xl font-bold leading-none text-[#1D9E75] sm:text-9xl">{result.truth_score}</div>
-              <div className="mt-4 text-sm font-semibold text-zinc-500">OVERALL TRUTH SCORE</div>
-              <p className="mt-2 text-sm text-zinc-500">{result.company} analyzed just now</p>
+            <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="institutional-card relative overflow-hidden p-8">
+                <div className="relative z-10 grid min-h-72 gap-8 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <div>
+                    <p className="institutional-section-label">Company readout</p>
+                    <div className="mt-8 max-w-xs">
+                      <p className="text-3xl font-black leading-tight text-[#f6f0ff]">{result.company}</p>
+                      <p className="mt-2 font-mono text-sm text-[#c6c0b2]">{result.domain}</p>
+                    </div>
+
+                    <div className="mt-10 space-y-4">
+                      {[
+                        ["GTM", result.gtm_score, "bg-[#c084fc]"],
+                        ["FIN", result.financial_score, "bg-[#9b5cff]"],
+                        ["SEC", result.security_score, "bg-[#f4c95d]"]
+                      ].map(([label, value, color]) => (
+                        <div className="grid grid-cols-[42px_1fr_36px] items-center gap-3" key={label as string}>
+                          <span className="font-mono text-[10px] font-black tracking-[0.18em] text-[#c6c0b2]">{label}</span>
+                          <span className="h-2 overflow-hidden rounded-full bg-[#f6f0ff]/14">
+                            <span
+                              className={`block h-full rounded-full ${color}`}
+                              style={{ width: `${Math.max(0, Math.min(Number(value), 100))}%` }}
+                            />
+                          </span>
+                          <span className="text-right font-mono text-xs font-black text-[#f6f0ff]">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="relative flex h-44 w-44 items-center justify-center justify-self-center sm:h-52 sm:w-52">
+                    <div className="absolute inset-0 rounded-full border border-[#f6f0ff]/10" />
+                    <div className="absolute inset-5 rounded-full border border-[#c084fc]/30" />
+                    <div className="absolute inset-10 rounded-full border border-[#f4c95d]/40" />
+                    <div className="absolute left-2 top-8 h-3 w-3 rounded-full bg-[#c084fc] shadow-[0_0_24px_rgba(35,215,192,0.55)]" />
+                    <div className="absolute bottom-6 right-7 h-3 w-3 rounded-full bg-[#f4c95d] shadow-[0_0_24px_rgba(206,246,107,0.45)]" />
+                    <div className="relative text-center">
+                      <div className="text-7xl font-black leading-none text-[#f4c95d] sm:text-8xl">{result.truth_score}</div>
+                      <div className="mt-3 text-[10px] font-black uppercase tracking-[0.26em] text-[#c6c0b2]">Truth score</div>
+                    </div>
+                  </div>
+                </div>
+                <p className="relative z-10 mt-5 text-sm text-[#c6c0b2]">Analyzed just now</p>
+              </div>
+              <div className="institutional-card result-radar relative min-h-80 overflow-hidden p-8">
+                <span className="cosmic-orb right-12 top-8 h-16 w-16" />
+                <span className="cosmic-spark left-[18%] top-[24%] h-1.5 w-1.5" />
+                <span className="cosmic-spark right-[28%] bottom-[22%] h-2 w-2" />
+                <div className="relative z-10 max-w-lg">
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-[#c084fc]">Evidence map</p>
+                  <h2 className="mt-5 text-4xl font-black leading-tight text-white">This view is about one company: what changed, what matters, what to verify.</h2>
+                  <p className="mt-6 text-sm leading-7 text-[#c6c0b2]">Battle Map ranks a market. Analyze stays surgical: source signals, prediction deltas, and Sentinel collapse-pattern checks for a single target.</p>
+                </div>
+              </div>
             </section>
 
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -743,8 +891,8 @@ export default function Page() {
 
             <section>
               <div className="mb-4 flex items-center gap-3">
-                <h2 className="text-xl font-bold text-zinc-100">LIVE SIGNALS</h2>
-                <span className="border border-[#1D9E75]/40 px-2 py-1 text-xs font-bold text-[#1D9E75]">
+                <h2 className="text-xl font-bold text-[#f6f0ff]">LIVE SIGNALS</h2>
+                <span className="border border-[#c084fc]/40 px-2 py-1 text-xs font-bold text-[#c084fc]">
                   {result.signals.length}
                 </span>
               </div>
@@ -770,7 +918,7 @@ export default function Page() {
             />
 
             <button
-              className="h-14 w-full border border-[#1D9E75] bg-transparent text-sm font-bold text-[#1D9E75] transition hover:bg-[#1D9E75] hover:text-black"
+              className="h-14 w-full border border-[#c084fc] bg-transparent text-sm font-bold text-[#c084fc] transition hover:bg-[#c084fc] hover:text-white"
               onClick={() => {
                 setCompany("");
                 setDomain("");

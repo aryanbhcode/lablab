@@ -116,47 +116,47 @@ function sentinelBadgeClass(riskLevel?: SentinelResult["risk_level"]) {
     return "border-amber-400/50 bg-amber-400/10 text-amber-400";
   }
   if (riskLevel === "LOW") {
-    return "border-[#1D9E75]/40 bg-[#1D9E75]/10 text-[#1D9E75]";
+    return "border-[#c084fc]/40 bg-[#c084fc]/10 text-[#c084fc]";
   }
-  return "border-zinc-800 bg-zinc-950 text-zinc-600";
+  return "border-[#4f3f78] bg-[#171126] text-[#9484b8]";
 }
 
 function PredictionsPanel({ predictions }: { predictions: PredictionsResult }) {
   if (predictions.message) {
-    return <p className="mt-4 border border-[#7C3AED]/40 bg-black p-4 text-sm text-zinc-500">{predictions.message}</p>;
+    return <p className="mt-4 border border-[#9b5cff]/40 bg-white p-4 text-sm text-[#cfc4e9]">{predictions.message}</p>;
   }
 
   return (
-    <div className="mt-5 border border-[#7C3AED]/40 bg-[#08060d] p-4">
+    <div className="mt-5 border border-[#9b5cff]/40 bg-[#171126] p-4">
       <div className="mb-4 flex items-center gap-3">
-        <h4 className="text-sm font-bold text-zinc-100">PREDICTIVE INTELLIGENCE</h4>
-        <span className="border border-[#7C3AED]/40 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">LIVE</span>
+        <h4 className="text-sm font-bold text-[#f6f0ff]">PREDICTIVE INTELLIGENCE</h4>
+        <span className="border border-[#9b5cff]/40 px-2 py-1 text-[10px] font-bold text-[#9b5cff]">LIVE</span>
       </div>
 
       {predictions.overall_trajectory && (
-        <div className="mb-4 border border-[#7C3AED]/40 bg-[#12091f] p-4">
-          <div className="text-[10px] font-bold text-[#7C3AED]">OVERALL TRAJECTORY</div>
-          <p className="mt-2 text-sm font-bold leading-6 text-zinc-100">{predictions.overall_trajectory}</p>
+        <div className="mb-4 border border-[#9b5cff]/40 bg-[#171126] p-4">
+          <div className="text-[10px] font-bold text-[#9b5cff]">OVERALL TRAJECTORY</div>
+          <p className="mt-2 text-sm font-bold leading-6 text-[#f6f0ff]">{predictions.overall_trajectory}</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-3">
         {predictions.predictions.slice(0, 3).map((prediction, index) => (
-          <div className="border border-[#7C3AED]/40 bg-black p-4" key={`${prediction.timeframe}-${index}`}>
+          <div className="border border-[#9b5cff]/40 bg-white p-4" key={`${prediction.timeframe}-${index}`}>
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="border border-[#7C3AED]/50 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+                <span className="border border-[#9b5cff]/50 px-2 py-1 text-[10px] font-bold text-[#9b5cff]">
                   {prediction.timeframe}
                 </span>
-                <span className="border border-zinc-800 px-2 py-1 text-[10px] font-bold text-zinc-500">
+                <span className="border border-[#4f3f78] px-2 py-1 text-[10px] font-bold text-[#cfc4e9]">
                   {categoryIcon(prediction.category)}
                 </span>
               </div>
-              <span className="text-xl font-bold text-[#7C3AED]">{predictionArrow(prediction.signal_direction)}</span>
+              <span className="text-xl font-bold text-[#9b5cff]">{predictionArrow(prediction.signal_direction)}</span>
             </div>
-            <p className="mt-3 text-sm font-bold leading-6 text-zinc-100">{prediction.prediction}</p>
-            <p className="mt-2 text-xs leading-5 text-zinc-500">{prediction.reasoning}</p>
-            <div className="mt-3 inline-flex border border-[#7C3AED]/40 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+            <p className="mt-3 text-sm font-bold leading-6 text-[#f6f0ff]">{prediction.prediction}</p>
+            <p className="mt-2 text-xs leading-5 text-[#cfc4e9]">{prediction.reasoning}</p>
+            <div className="mt-3 inline-flex border border-[#9b5cff]/40 px-2 py-1 text-[10px] font-bold text-[#9b5cff]">
               {prediction.confidence.toUpperCase()} CONFIDENCE
             </div>
           </div>
@@ -164,17 +164,17 @@ function PredictionsPanel({ predictions }: { predictions: PredictionsResult }) {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-        <div className="border border-red-500/40 bg-black p-4">
+        <div className="border border-red-500/40 bg-white p-4">
           <div className="text-[10px] font-bold text-red-500">⚠️ BIGGEST RISK</div>
-          <p className="mt-2 text-xs leading-5 text-zinc-400">{predictions.biggest_risk}</p>
+          <p className="mt-2 text-xs leading-5 text-[#cfc4e9]">{predictions.biggest_risk}</p>
         </div>
-        <div className="border border-[#1D9E75]/40 bg-black p-4">
-          <div className="text-[10px] font-bold text-[#1D9E75]">🚀 BIGGEST OPPORTUNITY</div>
-          <p className="mt-2 text-xs leading-5 text-zinc-400">{predictions.biggest_opportunity}</p>
+        <div className="border border-[#c084fc]/40 bg-white p-4">
+          <div className="text-[10px] font-bold text-[#c084fc]">🚀 BIGGEST OPPORTUNITY</div>
+          <p className="mt-2 text-xs leading-5 text-[#cfc4e9]">{predictions.biggest_opportunity}</p>
         </div>
       </div>
 
-      <p className="mt-4 text-[10px] text-zinc-600">Predictions based on pattern analysis. Not financial advice.</p>
+      <p className="mt-4 text-[10px] text-[#9484b8]">Predictions based on pattern analysis. Not financial advice.</p>
     </div>
   );
 }
@@ -479,35 +479,59 @@ export default function WatchlistPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-zinc-100">
-      <header className="flex h-16 items-center justify-between border-b border-zinc-900 px-5 sm:px-8">
-        <div className="text-sm font-semibold text-zinc-100">CORPORATE TRUTH TERMINAL</div>
+    <main className="institutional-shell min-h-screen">
+      <header className="institutional-header sticky top-0 z-20 flex min-h-[92px] items-center justify-between px-6 sm:px-12">
+        <div>
+          <div className="text-lg font-black tracking-[0.28em] text-white">CORPORATE TRUTH TERMINAL</div>
+          <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#cfc4e9]">
+            Public web intelligence for company risk
+          </div>
+        </div>
         <div className="flex items-center gap-5">
           <nav className="flex items-center gap-4 text-xs font-bold">
-            <Link className="text-zinc-500 transition hover:text-zinc-300" href="/">
+            <Link className="text-[#cfc4e9] transition hover:text-[#2f4445]" href="/">
               ANALYZE
             </Link>
-            <Link className="text-[#1D9E75]" href="/watchlist">
+            <Link className="text-[#f4c95d]" href="/watchlist">
               WATCHLIST
             </Link>
-            <Link className="text-zinc-500 transition hover:text-zinc-300" href="/battle-map">
+            <Link className="text-[#cfc4e9] transition hover:text-[#2f4445]" href="/battle-map">
               BATTLE MAP
             </Link>
           </nav>
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#1D9E75]">
-            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#1D9E75]" />
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#f4c95d]">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#f4c95d]" />
             LIVE
           </div>
         </div>
       </header>
 
-      <section className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
-        <form className="border border-zinc-900 bg-black p-5 sm:p-6" onSubmit={handleSubmit}>
-          <h1 className="text-2xl font-bold text-zinc-100">MONITOR A COMPANY</h1>
+      <section className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-12">
+        <div className="mb-10 grid gap-8 lg:grid-cols-[1fr_0.7fr]">
+          <div>
+            <p className="institutional-section-label mb-4">Watchlist</p>
+            <h1 className="text-5xl font-black leading-tight text-[#f6f0ff]">Mission control for monitored companies.</h1>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-[#cfc4e9]">
+              Keep the portfolio moving: ask the agent, check Sentinel risk, and jump straight into fresh scans.
+            </p>
+          </div>
+          <div className="institutional-hero-panel relative min-h-72 overflow-hidden p-8">
+            <span className="cosmic-orb right-12 top-10 h-20 w-20" />
+            <span className="cosmic-spark left-[20%] top-[28%] h-2 w-2" />
+            <div className="relative z-10 max-w-[72%]">
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#f4c95d]">Live desk</p>
+              <h2 className="mt-6 text-3xl font-black leading-tight text-white">Monitors, questions, alerts and predictions in one operating surface.</h2>
+              <p className="mt-6 text-sm leading-7 text-white/75">The page now has its own command-center identity instead of borrowing the Analyze layout.</p>
+            </div>
+          </div>
+        </div>
+
+        <form className="institutional-card p-6 sm:p-8" onSubmit={handleSubmit}>
+          <h2 className="text-2xl font-black text-[#f6f0ff]">Monitor a company</h2>
 
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <input
-              className="h-12 border border-zinc-800 bg-[#0a0a0a] px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-[#1D9E75]"
+              className="institutional-field h-12 px-4 text-sm outline-none transition placeholder:text-[#9484b8]"
               maxLength={100}
               onChange={(event) => setCompany(event.target.value)}
               placeholder="stripe.com"
@@ -516,7 +540,7 @@ export default function WatchlistPage() {
 
             {!inferredDomain && (
               <input
-                className="h-12 border border-zinc-800 bg-[#0a0a0a] px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-[#1D9E75]"
+                className="institutional-field h-12 px-4 text-sm outline-none transition placeholder:text-[#9484b8]"
                 onChange={(event) => setDomain(event.target.value)}
                 placeholder="stripe.com"
                 value={domain}
@@ -524,7 +548,7 @@ export default function WatchlistPage() {
             )}
 
             <input
-              className="h-12 border border-zinc-800 bg-[#0a0a0a] px-4 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-[#1D9E75]"
+              className="institutional-field h-12 px-4 text-sm outline-none transition placeholder:text-[#9484b8]"
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@company.com"
               type="email"
@@ -533,7 +557,7 @@ export default function WatchlistPage() {
           </div>
 
           <button
-            className="mt-4 h-12 w-full bg-[#1D9E75] text-sm font-bold text-black transition hover:bg-[#22ba8a] disabled:cursor-not-allowed disabled:opacity-60"
+            className="cosmic-cta mt-4 h-12 w-full text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             type="submit"
           >
@@ -541,28 +565,28 @@ export default function WatchlistPage() {
           </button>
 
           {formMessage && (
-            <p className="mt-4 border border-[#1D9E75]/40 bg-[#1D9E75]/10 p-3 text-sm text-[#1D9E75]">{formMessage}</p>
+            <p className="mt-4 border border-[#c084fc]/40 bg-[#c084fc]/10 p-3 text-sm text-[#c084fc]">{formMessage}</p>
           )}
           {formError && <p className="mt-4 border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{formError}</p>}
         </form>
 
-        <section className="mt-10 border border-[#7C3AED]/40 bg-black p-5 sm:p-6">
+        <section className="institutional-card mt-10 p-6 sm:p-8">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-zinc-100">ASK THE INTELLIGENCE AGENT</h2>
-                <span className="border border-[#7C3AED]/40 bg-[#7C3AED]/10 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+                <h2 className="text-xl font-bold text-[#f6f0ff]">ASK THE INTELLIGENCE AGENT</h2>
+                <span className="border border-[#9b5cff]/40 bg-[#9b5cff]/10 px-2 py-1 text-[10px] font-bold text-[#9b5cff]">
                   AI
                 </span>
               </div>
-              <p className="mt-2 text-sm text-zinc-500">Ask anything about your monitored companies.</p>
+              <p className="mt-2 text-sm text-[#cfc4e9]">Ask anything about your monitored companies.</p>
             </div>
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
             {exampleQuestions.map((question) => (
               <button
-                className="border border-zinc-800 bg-[#0a0a0a] px-3 py-2 text-left text-xs text-zinc-500 transition hover:border-[#7C3AED]/60 hover:text-[#7C3AED]"
+                className="border border-[#4f3f78] bg-[#171126] px-3 py-2 text-left text-xs text-[#cfc4e9] transition hover:border-[#9b5cff]/60 hover:text-[#9b5cff]"
                 key={question}
                 onClick={() => setAgentQuestion(question)}
                 type="button"
@@ -574,14 +598,14 @@ export default function WatchlistPage() {
 
           <form className="mt-5" onSubmit={handleAskAgent}>
             <textarea
-              className="min-h-28 w-full resize-y border border-zinc-800 bg-[#0a0a0a] p-4 text-sm leading-6 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-[#7C3AED]"
+              className="min-h-28 w-full resize-y border border-[#4f3f78] bg-[#171126] p-4 text-sm leading-6 text-[#f6f0ff] outline-none transition placeholder:text-[#9484b8] focus:border-[#9b5cff]"
               onChange={(event) => setAgentQuestion(event.target.value)}
               placeholder="Ask anything about your monitored companies..."
               rows={3}
               value={agentQuestion}
             />
             <button
-              className="mt-3 h-12 w-full bg-[#7C3AED] text-sm font-bold text-white transition hover:bg-[#8B5CF6] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 h-12 w-full bg-[#9b5cff] text-sm font-bold text-white transition hover:bg-[#b991ff] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isAgentStreaming}
               type="submit"
             >
@@ -592,40 +616,40 @@ export default function WatchlistPage() {
           {agentError && <p className="mt-4 border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{agentError}</p>}
 
           {(agentResponse || isAgentStreaming) && (
-            <div className="mt-5 border border-zinc-900 border-l-4 border-l-[#7C3AED] bg-[#08060d] p-5">
+            <div className="mt-5 border border-[#4f3f78] border-l-4 border-l-[#9b5cff] bg-[#171126] p-5">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xs font-bold tracking-[0.2em] text-[#7C3AED]">AGENT RESPONSE</h3>
+                <h3 className="text-xs font-bold tracking-[0.2em] text-[#9b5cff]">AGENT RESPONSE</h3>
                 {isAgentStreaming && (
-                  <span className="flex items-center gap-1 text-xs text-[#7C3AED]">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#7C3AED]" />
+                  <span className="flex items-center gap-1 text-xs text-[#9b5cff]">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#9b5cff]" />
                     thinking
                   </span>
                 )}
               </div>
-              <div className="whitespace-pre-wrap font-mono text-sm leading-8 text-zinc-200">
+              <div className="whitespace-pre-wrap font-mono text-sm leading-8 text-[#203436]">
                 {agentResponse || "Preparing context..."}
               </div>
-              <div className="mt-5 border-t border-zinc-900 pt-4">
-                <p className="font-mono text-[10px] uppercase tracking-wide text-zinc-600">
+              <div className="mt-5 border-t border-[#4f3f78] pt-4">
+                <p className="font-mono text-[10px] uppercase tracking-wide text-[#9484b8]">
                   ASKED AT: {formatTimestamp(agentAskedAt)}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
-                    className="h-8 border border-zinc-800 px-3 text-[10px] font-bold text-zinc-400 transition hover:border-[#7C3AED]/60 hover:text-[#7C3AED]"
+                    className="h-8 border border-[#4f3f78] px-3 text-[10px] font-bold text-[#cfc4e9] transition hover:border-[#9b5cff]/60 hover:text-[#9b5cff]"
                     onClick={() => navigator.clipboard.writeText(agentResponse)}
                     type="button"
                   >
                     COPY RESPONSE
                   </button>
                   <button
-                    className="h-8 border border-zinc-800 px-3 text-[10px] font-bold text-zinc-400 transition hover:border-[#7C3AED]/60 hover:text-[#7C3AED]"
+                    className="h-8 border border-[#4f3f78] px-3 text-[10px] font-bold text-[#cfc4e9] transition hover:border-[#9b5cff]/60 hover:text-[#9b5cff]"
                     onClick={() => setAgentQuestion(`${agentQuestion}\n\nFollow-up: `)}
                     type="button"
                   >
                     ASK FOLLOW-UP
                   </button>
                   <button
-                    className="h-8 border border-zinc-800 px-3 text-[10px] font-bold text-zinc-400 transition hover:border-red-500/60 hover:text-red-400"
+                    className="h-8 border border-[#4f3f78] px-3 text-[10px] font-bold text-[#cfc4e9] transition hover:border-red-500/60 hover:text-red-400"
                     onClick={() => {
                       setAgentResponse("");
                       setAgentError("");
@@ -640,11 +664,11 @@ export default function WatchlistPage() {
             </div>
           )}
 
-          <div className="mt-6 border-t border-zinc-900 pt-4">
+          <div className="mt-6 border-t border-[#4f3f78] pt-4">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-bold text-zinc-100">RECENT QUERIES</h3>
+              <h3 className="text-sm font-bold text-[#f6f0ff]">RECENT QUERIES</h3>
               <button
-                className="text-xs font-bold text-[#7C3AED] transition hover:text-[#8B5CF6]"
+                className="text-xs font-bold text-[#9b5cff] transition hover:text-[#b991ff]"
                 onClick={() => setShowQueryHistory((current) => !current)}
                 type="button"
               >
@@ -655,26 +679,26 @@ export default function WatchlistPage() {
             {showQueryHistory && (
               <div className="mt-4 space-y-3">
                 {queryHistory.slice(0, 5).length === 0 && (
-                  <p className="text-sm text-zinc-600">No agent queries yet.</p>
+                  <p className="text-sm text-[#9484b8]">No agent queries yet.</p>
                 )}
                 {queryHistory.slice(0, 5).map((item, index) => {
                   const key = `${item.asked_at}-${index}`;
                   const isExpanded = expandedQuery === key;
                   return (
-                    <div className="border border-zinc-900 bg-[#0a0a0a] p-4" key={key}>
+                    <div className="border border-[#4f3f78] bg-[#171126] p-4" key={key}>
                       <button
-                        className="w-full text-left text-sm font-bold text-[#1D9E75]"
+                        className="w-full text-left text-sm font-bold text-[#c084fc]"
                         onClick={() => setExpandedQuery(isExpanded ? "" : key)}
                         type="button"
                       >
                         {item.question}
                       </button>
                       {isExpanded && (
-                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-zinc-400">
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#cfc4e9]">
                           {item.answer}
                         </p>
                       )}
-                      <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-zinc-700">
+                      <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-[#87928f]">
                         {formatTimestamp(item.asked_at)}
                       </p>
                     </div>
@@ -685,20 +709,20 @@ export default function WatchlistPage() {
           </div>
         </section>
 
-        <section className="mt-10">
+        <section className="mt-12">
           <div className="mb-4 flex items-center gap-3">
-            <h2 className="text-xl font-bold text-zinc-100">ACTIVE MONITORS</h2>
-            <span className="border border-[#1D9E75]/40 px-2 py-1 text-xs font-bold text-[#1D9E75]">
+            <h2 className="text-xl font-bold text-[#f6f0ff]">ACTIVE MONITORS</h2>
+            <span className="border border-[#c084fc]/40 px-2 py-1 text-xs font-bold text-[#c084fc]">
               {entries.length}
             </span>
           </div>
 
           {listError && <p className="mb-4 border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{listError}</p>}
 
-          {isLoading && <p className="text-sm text-zinc-500">Loading monitors...</p>}
+          {isLoading && <p className="text-sm text-[#cfc4e9]">Loading monitors...</p>}
 
           {!isLoading && entries.length === 0 && (
-            <p className="border border-zinc-900 bg-black p-5 text-sm text-zinc-500">
+            <p className="border border-[#4f3f78] bg-white p-5 text-sm text-[#cfc4e9]">
               No companies monitored yet. Add one above.
             </p>
           )}
@@ -710,21 +734,21 @@ export default function WatchlistPage() {
               const sentinelRisk = sentinelByDomain[entry.domain]?.risk_level;
 
               return (
-                <article className="border border-zinc-900 bg-black p-5" key={entry.id}>
+                <article className="border border-[#4f3f78] bg-white p-5" key={entry.id}>
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0">
-                      <h3 className="break-words text-lg font-bold text-zinc-100">
-                        {entry.company} <span className="text-zinc-500">/</span> {entry.domain}
+                      <h3 className="break-words text-lg font-bold text-[#f6f0ff]">
+                        {entry.company} <span className="text-[#cfc4e9]">/</span> {entry.domain}
                       </h3>
                       <span className={`mt-3 inline-flex border px-2 py-1 text-[10px] font-bold ${sentinelBadgeClass(sentinelRisk)}`}>
                         SENTINEL: {sentinelRisk || "SCANNING"}
                       </span>
-                      <p className="mt-2 text-sm text-zinc-500">{entry.email}</p>
-                      <p className="mt-4 text-[10px] uppercase tracking-wide text-zinc-600">
+                      <p className="mt-2 text-sm text-[#cfc4e9]">{entry.email}</p>
+                      <p className="mt-4 text-[10px] uppercase tracking-wide text-[#9484b8]">
                         Added {formatTimestamp(entry.created_at)}
                       </p>
                       {analyzedAt && (
-                        <p className="mt-1 text-[10px] uppercase tracking-wide text-zinc-600">
+                        <p className="mt-1 text-[10px] uppercase tracking-wide text-[#9484b8]">
                           Last analyzed {formatTimestamp(analyzedAt)}
                         </p>
                       )}
@@ -732,13 +756,13 @@ export default function WatchlistPage() {
 
                     <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
                       <Link
-                        className="inline-flex h-9 items-center border border-[#1D9E75] px-3 text-xs font-bold text-[#1D9E75] transition hover:bg-[#1D9E75] hover:text-black"
+                        className="inline-flex h-9 items-center border border-[#c084fc] px-3 text-xs font-bold text-[#c084fc] transition hover:bg-[#c084fc] hover:text-white"
                         href={analyzeHref}
                       >
                         ANALYZE NOW
                       </Link>
                       <button
-                        className="h-9 border border-[#7C3AED]/60 px-3 text-xs font-bold text-[#7C3AED] transition hover:bg-[#7C3AED] hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        className="h-9 border border-[#9b5cff]/60 px-3 text-xs font-bold text-[#9b5cff] transition hover:bg-[#9b5cff] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                         disabled={loadingPredictionDomain === entry.domain}
                         onClick={() => handleViewPredictions(entry)}
                         type="button"
@@ -746,7 +770,7 @@ export default function WatchlistPage() {
                         {loadingPredictionDomain === entry.domain ? "LOADING..." : "VIEW PREDICTIONS"}
                       </button>
                       <button
-                        className="h-9 border border-red-500/50 px-3 text-xs font-bold text-red-500 transition hover:bg-red-500 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        className="h-9 border border-red-500/50 px-3 text-xs font-bold text-red-500 transition hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                         disabled={removingCompany === entry.company}
                         onClick={() => handleRemove(entry)}
                         type="button"
@@ -759,7 +783,7 @@ export default function WatchlistPage() {
                   {expandedDomain === entry.domain && (
                     <>
                       {loadingPredictionDomain === entry.domain && (
-                        <p className="mt-4 border border-[#7C3AED]/40 bg-black p-4 text-sm text-[#7C3AED]">
+                        <p className="mt-4 border border-[#9b5cff]/40 bg-white p-4 text-sm text-[#9b5cff]">
                           🔮 Analyzing patterns...
                         </p>
                       )}

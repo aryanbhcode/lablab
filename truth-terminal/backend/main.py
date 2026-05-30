@@ -166,6 +166,7 @@ async def run_analysis(company: str, domain: str) -> dict[str, Any]:
     _log("synthesis started")
     synthesis = await synthesize(company, scraped_data)
     synthesis = _normalize_analysis_scores(synthesis)
+    synthesis["source_status"] = _scrape_source_status(scraped_data)
     synthesis["data_quality"] = _analysis_quality(synthesis)
     synthesis_elapsed = perf_counter() - synthesis_started
     _log(f"synthesis completed in {synthesis_elapsed:.2f}s")
@@ -257,14 +258,55 @@ def _normalize_analysis_scores(result: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _scrape_source_status(scraped_data: dict[str, Any]) -> dict[str, Any]:
+    sources: dict[str, dict[str, Any]] = {}
+
+    for name in ("jobs", "reviews", "pricing", "news"):
+        payload = scraped_data.get(name)
+        error = ""
+        available = False
+
+        if isinstance(payload, dict):
+            raw_error = payload.get("error")
+            error = str(raw_error) if raw_error else ""
+            data = payload.get("data")
+            if isinstance(data, dict):
+                if name == "jobs":
+                    available = bool(data.get("job_titles")) or _safe_score(data.get("total_job_count")) > 0
+                elif name == "reviews":
+                    available = bool(data.get("recent_review_excerpts")) or data.get("overall_rating") is not None
+                elif name == "pricing":
+                    available = bool(data.get("pricing_tiers")) or bool(data.get("prices")) or bool(data.get("enterprise_or_custom_tier_mentions"))
+                elif name == "news":
+                    available = bool(data.get("headlines"))
+
+        sources[name] = {
+            "ok": not error,
+            "available": available,
+            "error": error,
+        }
+
+    return sources
+
+
 def _analysis_quality(result: dict[str, Any]) -> dict[str, Any]:
     warnings: list[str] = []
     signals = result.get("signals") if isinstance(result.get("signals"), list) else []
     haystack = json.dumps(signals, default=str).lower()
+    source_status = result.get("source_status") if isinstance(result.get("source_status"), dict) else {}
+    failed_sources = [
+        name
+        for name, status in source_status.items()
+        if isinstance(status, dict) and status.get("error")
+    ]
 
-    if "brightdata" in haystack or "not set" in haystack or "failed" in haystack:
-        warnings.append("One or more live data sources failed during scraping.")
-    if "zero job" in haystack or "no job" in haystack:
+    if failed_sources:
+        warnings.append(f"Live data source failed: {', '.join(sorted(failed_sources))}.")
+    if "zero job" in haystack or "no job" in haystack or (
+        isinstance(source_status.get("jobs"), dict)
+        and source_status["jobs"].get("ok")
+        and not source_status["jobs"].get("available")
+    ):
         warnings.append("Hiring signal may be incomplete or empty.")
     if "analysis incomplete" in haystack:
         warnings.append("Claude synthesis fell back to an incomplete-analysis result.")

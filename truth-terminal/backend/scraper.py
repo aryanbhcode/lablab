@@ -218,7 +218,11 @@ async def scrape_jobs(company: str, domain: str) -> dict[str, Any]:
                 "locations": company_locations,
             }
         except Exception as exc:
-            company_jobs_data = {"url": company_jobs_url, "exists": False, "error": str(exc)}
+            company_jobs_data = {
+                "url": company_jobs_url,
+                "exists": False,
+                "note": "No standard jobs subdomain detected; LinkedIn job data is still used.",
+            }
 
         return {
             "error": None,

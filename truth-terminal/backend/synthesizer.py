@@ -41,6 +41,9 @@ You are analyzing scraped company intelligence for {company}.
 
 The raw scraped_data dict contains these top-level keys: jobs, reviews, pricing, news.
 Use only the data below. Be specific and cite the actual data found.
+Only treat a source as failed if its top-level "error" field is non-null.
+Do not treat an unavailable optional company_jobs subdomain as a failed live source;
+many companies use nonstandard careers URLs and LinkedIn job data still counts.
 
 Scoring instructions:
 - gtm_score: based on hiring velocity, sales/marketing headcount, expansion signals.
