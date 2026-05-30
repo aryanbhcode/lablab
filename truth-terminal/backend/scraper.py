@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 from collections import Counter
@@ -77,11 +79,11 @@ def _empty_news_data(company: str, error: str | None = None) -> dict[str, Any]:
 
 
 async def _fetch_with_brightdata(url: str, zone: str | None = None) -> str:
-    api_token = os.getenv("BRIGHTDATA_API_TOKEN")
+    api_token = os.getenv("BRIGHTDATA_API_TOKEN") or os.getenv("BRIGHTDATA_API_KEY")
     brightdata_zone = zone or os.getenv("BRIGHTDATA_ZONE")
 
     if not api_token:
-        raise ValueError("BRIGHTDATA_API_TOKEN is not set")
+        raise ValueError("BRIGHTDATA_API_TOKEN or BRIGHTDATA_API_KEY is not set")
     if not brightdata_zone:
         raise ValueError("BRIGHTDATA_ZONE is not set")
 

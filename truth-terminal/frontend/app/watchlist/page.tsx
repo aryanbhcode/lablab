@@ -35,7 +35,27 @@ type PredictionsResult = {
   error?: string;
 };
 
+type QueryResponse = {
+  chunk?: string;
+  done?: boolean;
+};
+
+type QueryHistory = {
+  question: string;
+  answer: string;
+  asked_at: string;
+};
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const exampleQuestions = [
+  "Which company is most at risk right now?",
+  "Which of my companies shows the strongest buying signals?",
+  "Where should I focus my sales team this week?",
+  "Which company is most likely to have a security incident?",
+  "Compare the financial health of all monitored companies",
+  "Which company is closest to a major announcement?"
+];
 
 function inferDomain(value: string) {
   const trimmed = value.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
@@ -153,6 +173,14 @@ export default function WatchlistPage() {
   const [loadingPredictionDomain, setLoadingPredictionDomain] = useState("");
   const [predictionsByDomain, setPredictionsByDomain] = useState<Record<string, PredictionsResult>>({});
   const [predictionErrorsByDomain, setPredictionErrorsByDomain] = useState<Record<string, string>>({});
+  const [agentQuestion, setAgentQuestion] = useState("");
+  const [agentResponse, setAgentResponse] = useState("");
+  const [agentAskedAt, setAgentAskedAt] = useState("");
+  const [agentError, setAgentError] = useState("");
+  const [isAgentStreaming, setIsAgentStreaming] = useState(false);
+  const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([]);
+  const [showQueryHistory, setShowQueryHistory] = useState(false);
+  const [expandedQuery, setExpandedQuery] = useState("");
 
   const inferredDomain = useMemo(() => inferDomain(company), [company]);
   const resolvedDomain = useMemo(() => domain.trim() || inferDomain(company), [company, domain]);
@@ -182,6 +210,23 @@ export default function WatchlistPage() {
 
     return () => window.clearInterval(interval);
   }, [fetchWatchlist]);
+
+  const fetchQueryHistory = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiUrl}/query/history`);
+      if (!response.ok) {
+        return;
+      }
+      const payload = (await response.json()) as { queries: QueryHistory[] };
+      setQueryHistory(payload.queries || []);
+    } catch {
+      setQueryHistory([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchQueryHistory();
+  }, [fetchQueryHistory]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -298,6 +343,74 @@ export default function WatchlistPage() {
     }
   }
 
+  async function handleAskAgent(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const question = agentQuestion.trim();
+    if (!question) {
+      setAgentError("Ask a question first.");
+      return;
+    }
+
+    setAgentError("");
+    setAgentResponse("");
+    setAgentAskedAt(new Date().toISOString());
+    setIsAgentStreaming(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+
+      if (!response.ok || !response.body) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || "Agent query failed.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullAnswer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) {
+            continue;
+          }
+          const parsed = JSON.parse(line) as QueryResponse;
+          if (parsed.chunk) {
+            fullAnswer += parsed.chunk;
+            setAgentResponse(fullAnswer);
+          }
+        }
+      }
+
+      if (buffer.trim()) {
+        const parsed = JSON.parse(buffer) as QueryResponse;
+        if (parsed.chunk) {
+          fullAnswer += parsed.chunk;
+          setAgentResponse(fullAnswer);
+        }
+      }
+
+      await fetchQueryHistory();
+    } catch (caughtError) {
+      setAgentError(caughtError instanceof Error ? caughtError.message : "Agent query failed.");
+    } finally {
+      setIsAgentStreaming(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-zinc-100">
       <header className="flex h-16 items-center justify-between border-b border-zinc-900 px-5 sm:px-8">
@@ -309,6 +422,9 @@ export default function WatchlistPage() {
             </Link>
             <Link className="text-[#1D9E75]" href="/watchlist">
               WATCHLIST
+            </Link>
+            <Link className="text-zinc-500 transition hover:text-zinc-300" href="/battle-map">
+              BATTLE MAP
             </Link>
           </nav>
           <div className="flex items-center gap-2 text-xs font-semibold text-[#1D9E75]">
@@ -362,6 +478,145 @@ export default function WatchlistPage() {
           )}
           {formError && <p className="mt-4 border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{formError}</p>}
         </form>
+
+        <section className="mt-10 border border-[#7C3AED]/40 bg-black p-5 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-zinc-100">ASK THE INTELLIGENCE AGENT</h2>
+                <span className="border border-[#7C3AED]/40 bg-[#7C3AED]/10 px-2 py-1 text-[10px] font-bold text-[#7C3AED]">
+                  AI
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-zinc-500">Ask anything about your monitored companies.</p>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {exampleQuestions.map((question) => (
+              <button
+                className="border border-zinc-800 bg-[#0a0a0a] px-3 py-2 text-left text-xs text-zinc-500 transition hover:border-[#7C3AED]/60 hover:text-[#7C3AED]"
+                key={question}
+                onClick={() => setAgentQuestion(question)}
+                type="button"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+
+          <form className="mt-5" onSubmit={handleAskAgent}>
+            <textarea
+              className="min-h-28 w-full resize-y border border-zinc-800 bg-[#0a0a0a] p-4 text-sm leading-6 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-[#7C3AED]"
+              onChange={(event) => setAgentQuestion(event.target.value)}
+              placeholder="Ask anything about your monitored companies..."
+              rows={3}
+              value={agentQuestion}
+            />
+            <button
+              className="mt-3 h-12 w-full bg-[#7C3AED] text-sm font-bold text-white transition hover:bg-[#8B5CF6] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isAgentStreaming}
+              type="submit"
+            >
+              {isAgentStreaming ? "ASKING AGENT..." : "ASK AGENT"}
+            </button>
+          </form>
+
+          {agentError && <p className="mt-4 border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{agentError}</p>}
+
+          {(agentResponse || isAgentStreaming) && (
+            <div className="mt-5 border border-zinc-900 border-l-4 border-l-[#7C3AED] bg-[#08060d] p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-xs font-bold tracking-[0.2em] text-[#7C3AED]">AGENT RESPONSE</h3>
+                {isAgentStreaming && (
+                  <span className="flex items-center gap-1 text-xs text-[#7C3AED]">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#7C3AED]" />
+                    thinking
+                  </span>
+                )}
+              </div>
+              <div className="whitespace-pre-wrap font-mono text-sm leading-8 text-zinc-200">
+                {agentResponse || "Preparing context..."}
+              </div>
+              <div className="mt-5 border-t border-zinc-900 pt-4">
+                <p className="font-mono text-[10px] uppercase tracking-wide text-zinc-600">
+                  ASKED AT: {formatTimestamp(agentAskedAt)}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    className="h-8 border border-zinc-800 px-3 text-[10px] font-bold text-zinc-400 transition hover:border-[#7C3AED]/60 hover:text-[#7C3AED]"
+                    onClick={() => navigator.clipboard.writeText(agentResponse)}
+                    type="button"
+                  >
+                    COPY RESPONSE
+                  </button>
+                  <button
+                    className="h-8 border border-zinc-800 px-3 text-[10px] font-bold text-zinc-400 transition hover:border-[#7C3AED]/60 hover:text-[#7C3AED]"
+                    onClick={() => setAgentQuestion(`${agentQuestion}\n\nFollow-up: `)}
+                    type="button"
+                  >
+                    ASK FOLLOW-UP
+                  </button>
+                  <button
+                    className="h-8 border border-zinc-800 px-3 text-[10px] font-bold text-zinc-400 transition hover:border-red-500/60 hover:text-red-400"
+                    onClick={() => {
+                      setAgentResponse("");
+                      setAgentError("");
+                      setAgentAskedAt("");
+                    }}
+                    type="button"
+                  >
+                    CLEAR
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 border-t border-zinc-900 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="text-sm font-bold text-zinc-100">RECENT QUERIES</h3>
+              <button
+                className="text-xs font-bold text-[#7C3AED] transition hover:text-[#8B5CF6]"
+                onClick={() => setShowQueryHistory((current) => !current)}
+                type="button"
+              >
+                {showQueryHistory ? "HIDE HISTORY" : "SHOW HISTORY"}
+              </button>
+            </div>
+
+            {showQueryHistory && (
+              <div className="mt-4 space-y-3">
+                {queryHistory.slice(0, 5).length === 0 && (
+                  <p className="text-sm text-zinc-600">No agent queries yet.</p>
+                )}
+                {queryHistory.slice(0, 5).map((item, index) => {
+                  const key = `${item.asked_at}-${index}`;
+                  const isExpanded = expandedQuery === key;
+                  return (
+                    <div className="border border-zinc-900 bg-[#0a0a0a] p-4" key={key}>
+                      <button
+                        className="w-full text-left text-sm font-bold text-[#1D9E75]"
+                        onClick={() => setExpandedQuery(isExpanded ? "" : key)}
+                        type="button"
+                      >
+                        {item.question}
+                      </button>
+                      {isExpanded && (
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-zinc-400">
+                          {item.answer}
+                        </p>
+                      )}
+                      <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-zinc-700">
+                        {formatTimestamp(item.asked_at)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
 
         <section className="mt-10">
           <div className="mb-4 flex items-center gap-3">

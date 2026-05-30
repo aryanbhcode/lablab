@@ -454,6 +454,9 @@ export default function Page() {
             <Link className="text-zinc-500 transition hover:text-zinc-300" href="/watchlist">
               WATCHLIST
             </Link>
+            <Link className="text-zinc-500 transition hover:text-zinc-300" href="/battle-map">
+              BATTLE MAP
+            </Link>
           </nav>
           <div className="flex items-center gap-2 text-xs font-semibold text-[#1D9E75]">
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#1D9E75]" />

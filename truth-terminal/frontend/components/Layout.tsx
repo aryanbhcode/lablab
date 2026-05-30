@@ -92,6 +92,16 @@ export default function Layout({ children }: { children: ReactNode }) {
           >
             WATCHLIST
           </Link>
+          <Link
+            className={`flex h-full items-center border-b-2 transition ${
+              pathname === "/battle-map"
+                ? "border-[var(--accent)] text-[var(--text-primary)]"
+                : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+            }`}
+            href="/battle-map"
+          >
+            BATTLE MAP
+          </Link>
         </div>
       </nav>
 

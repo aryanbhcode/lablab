@@ -1,11 +1,12 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ButtonHTMLAttributes, ReactNode } from "react";
+import type { HTMLMotionProps } from "framer-motion";
+import { ReactNode } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "purple";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = Omit<HTMLMotionProps<"button">, "children" | "whileHover" | "whileTap"> & {
   children: ReactNode;
   variant?: ButtonVariant;
 };

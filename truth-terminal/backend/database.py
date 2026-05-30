@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import sqlite3
 from datetime import datetime, timezone
@@ -61,6 +63,16 @@ def init_db() -> None:
                 truth_score INTEGER,
                 signals TEXT,
                 scraped_at TEXT
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS queries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                asked_at TEXT
             )
             """
         )
@@ -169,6 +181,38 @@ def get_analysis_history(company: str, domain: str, limit: int = 10) -> list[dic
             (company, domain, limit),
         ).fetchall()
         return [_parse_signals(dict(row)) for row in rows]
+
+
+def get_total_analyses_count() -> int:
+    with _connect() as connection:
+        row = connection.execute("SELECT COUNT(*) AS count FROM analyses").fetchone()
+        return int(row["count"] if row else 0)
+
+
+def save_query(question: str, answer: str) -> int:
+    with _connect() as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO queries (question, answer, asked_at)
+            VALUES (?, ?, ?)
+            """,
+            (question, answer, _iso_now()),
+        )
+        return int(cursor.lastrowid)
+
+
+def get_query_history(limit: int = 10) -> list[dict[str, Any]]:
+    with _connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT question, answer, asked_at
+            FROM queries
+            ORDER BY asked_at DESC, id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [dict(row) for row in rows]
 
 
 def delete_from_watchlist(company: str, domain: str | None = None) -> int:
