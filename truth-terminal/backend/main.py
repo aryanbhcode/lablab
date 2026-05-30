@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from database import (
@@ -48,6 +48,12 @@ ENV_VARS = [
     "CORS_ORIGINS",
     "DATABASE_PATH",
 ]
+
+DEFAULT_CORS_ORIGINS = {
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://lablab-93mymnc38-aryan18bhatia-2235s-projects.vercel.app",
+}
 
 load_dotenv()
 
@@ -101,10 +107,7 @@ def _watchlist_company_for_domain(domain: str) -> Optional[str]:
 
 
 def _cors_origins() -> list[str]:
-    origins = {
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    }
+    origins = set(DEFAULT_CORS_ORIGINS)
 
     for env_name in ("FRONTEND_URL", "CORS_ORIGINS"):
         raw_value = os.getenv(env_name, "")
@@ -660,8 +663,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=_cors_origins(),
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     @app.on_event("startup")
@@ -695,6 +698,10 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check() -> dict[str, str]:
         return {"status": "healthy"}
+
+    @app.options("/{full_path:path}")
+    async def preflight_handler(_full_path: str) -> Response:
+        return Response(status_code=204)
 
     @app.post("/analyze")
     async def analyze(payload: AnalyzeRequest) -> StreamingResponse:
