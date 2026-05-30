@@ -84,7 +84,7 @@ type SentinelResult = {
   analyzed_at: string;
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
 
 const loadingMessages = [
   "→ Connecting to Bright Data scraping network...",

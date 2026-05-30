@@ -9,11 +9,11 @@ cd backend
 cp .env.example .env
 # Fill in your keys in .env
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+PORT=8000 uvicorn main:app --reload --host 0.0.0.0 --port "$PORT"
 
 ### 3. Frontend  
 cd frontend
 npm install
 npm run dev
 
-### 4. Open http://localhost:3000
+### 4. Open the frontend URL printed by Next.js

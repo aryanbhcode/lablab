@@ -39,7 +39,7 @@ type BattleMapResult = {
   scraped_at: string;
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
 
 const loadingMessages = [
   "→ Identifying top competitors via AI...",

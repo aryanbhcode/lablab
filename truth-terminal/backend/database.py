@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 
-DB_PATH = Path(__file__).resolve().parent / "truth_terminal.db"
+DB_PATH = Path(os.getenv("DATABASE_PATH", Path(__file__).resolve().parent / "truth_terminal.db")).expanduser()
 
 
 def _iso_now() -> str:
@@ -15,6 +16,7 @@ def _iso_now() -> str:
 
 
 def _connect() -> sqlite3.Connection:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     return connection

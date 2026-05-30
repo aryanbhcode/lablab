@@ -126,11 +126,9 @@ async def generate_predictions(company: str, domain: str) -> dict[str, Any]:
 
 async def generate_predictions_by_domain(domain: str) -> dict:
     # Try domain as company name first, then try capitalized, then just use domain
-    from database import get_analysis_history
+    from database import DB_PATH
     import sqlite3
-    from pathlib import Path
-    
-    DB_PATH = Path(__file__).resolve().parent / "truth_terminal.db"
+
     conn = sqlite3.connect(DB_PATH)
     rows = conn.execute(
         "SELECT DISTINCT company FROM analyses WHERE domain = ? ORDER BY scraped_at DESC LIMIT 1",

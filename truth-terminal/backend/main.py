@@ -44,6 +44,9 @@ ENV_VARS = [
     "BRIGHTDATA_ZONE",
     "BRIGHTDATA_SERP_ZONE",
     "RESEND_API_KEY",
+    "FRONTEND_URL",
+    "CORS_ORIGINS",
+    "DATABASE_PATH",
 ]
 
 load_dotenv()
@@ -95,6 +98,28 @@ def _watchlist_company_for_domain(domain: str) -> Optional[str]:
         if entry["domain"] == domain:
             return entry["company"]
     return None
+
+
+def _cors_origins() -> list[str]:
+    origins = {
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    }
+
+    for env_name in ("FRONTEND_URL", "CORS_ORIGINS"):
+        raw_value = os.getenv(env_name, "")
+        for origin in raw_value.split(","):
+            cleaned = origin.strip().rstrip("/")
+            if cleaned:
+                origins.add(cleaned)
+
+    vercel_url = os.getenv("VERCEL_URL", "").strip().rstrip("/")
+    if vercel_url:
+        if not vercel_url.startswith(("http://", "https://")):
+            vercel_url = f"https://{vercel_url}"
+        origins.add(vercel_url)
+
+    return sorted(origins)
 
 
 async def _timed_call(
@@ -633,7 +658,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"],
+        allow_origins=_cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -663,9 +688,13 @@ def create_app() -> FastAPI:
     async def global_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
         return JSONResponse(status_code=500, content={"error": str(exc)})
 
+    @app.get("/")
+    async def root() -> dict[str, str]:
+        return {"status": "healthy", "service": "truth-terminal-backend"}
+
     @app.get("/health")
     async def health_check() -> dict[str, str]:
-        return {"status": "ok", "timestamp": _iso_now()}
+        return {"status": "healthy"}
 
     @app.post("/analyze")
     async def analyze(payload: AnalyzeRequest) -> StreamingResponse:
@@ -769,3 +798,11 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.getenv("PORT", "3000"))
+    _log(f"server running on {port}")
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
