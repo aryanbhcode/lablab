@@ -38,6 +38,27 @@ def _parse_signals(row: dict[str, Any]) -> dict[str, Any]:
     return row
 
 
+def _parse_json_field(row: dict[str, Any], key: str, fallback: Any) -> dict[str, Any]:
+    value = row.get(key)
+    if isinstance(value, str) and value:
+        try:
+            row[key] = json.loads(value)
+        except json.JSONDecodeError:
+            row[key] = fallback
+    elif value is None:
+        row[key] = fallback
+    return row
+
+
+def _ensure_column(connection: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    columns = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table})").fetchall()
+    }
+    if column not in columns:
+        connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
 def init_db() -> None:
     with _connect() as connection:
         connection.execute(
@@ -66,6 +87,10 @@ def init_db() -> None:
             )
             """
         )
+        _ensure_column(connection, "analyses", "gtm_summary", "TEXT")
+        _ensure_column(connection, "analyses", "financial_summary", "TEXT")
+        _ensure_column(connection, "analyses", "security_summary", "TEXT")
+        _ensure_column(connection, "analyses", "sentinel_json", "TEXT")
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS queries (
@@ -102,9 +127,10 @@ def get_watchlist() -> list[dict[str, Any]]:
         return [dict(row) for row in rows]
 
 
-def save_analysis(company: str, domain: str, result_dict: dict[str, Any]) -> int:
+def save_analysis(company: str, domain: str, result_dict: dict[str, Any], sentinel_json: dict[str, Any] | None = None) -> int:
     signals = result_dict.get("signals", [])
     scraped_at = result_dict.get("scraped_at") or _iso_now()
+    sentinel_payload = sentinel_json if sentinel_json is not None else result_dict.get("sentinel")
 
     with _connect() as connection:
         cursor = connection.execute(
@@ -117,9 +143,13 @@ def save_analysis(company: str, domain: str, result_dict: dict[str, Any]) -> int
                 security_score,
                 truth_score,
                 signals,
+                gtm_summary,
+                financial_summary,
+                security_summary,
+                sentinel_json,
                 scraped_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 company,
@@ -129,10 +159,49 @@ def save_analysis(company: str, domain: str, result_dict: dict[str, Any]) -> int
                 result_dict.get("security_score"),
                 result_dict.get("truth_score"),
                 json.dumps(signals, default=str),
+                result_dict.get("gtm_summary"),
+                result_dict.get("financial_summary"),
+                result_dict.get("security_summary"),
+                json.dumps(sentinel_payload, default=str) if sentinel_payload else None,
                 scraped_at,
             ),
         )
         return int(cursor.lastrowid)
+
+
+def save_sentinel_result(company: str, domain: str, sentinel_result: dict[str, Any], scraped_at: str | None = None) -> int:
+    with _connect() as connection:
+        if scraped_at:
+            cursor = connection.execute(
+                """
+                UPDATE analyses
+                SET sentinel_json = ?
+                WHERE id = (
+                    SELECT id FROM analyses
+                    WHERE company = ? AND domain = ? AND scraped_at = ?
+                    ORDER BY id DESC
+                    LIMIT 1
+                )
+                """,
+                (json.dumps(sentinel_result, default=str), company, domain, scraped_at),
+            )
+            if cursor.rowcount:
+                return cursor.rowcount
+
+        cursor = connection.execute(
+            """
+            UPDATE analyses
+            SET sentinel_json = ?
+            WHERE id = (
+                SELECT id FROM analyses
+                WHERE company = ? AND domain = ?
+                ORDER BY scraped_at DESC, id DESC
+                LIMIT 1
+            )
+            """,
+            (json.dumps(sentinel_result, default=str), company, domain),
+        )
+        return cursor.rowcount
 
 
 def get_last_analysis(company: str, domain: str) -> dict[str, Any] | None:
@@ -148,6 +217,10 @@ def get_last_analysis(company: str, domain: str) -> dict[str, Any] | None:
                 security_score,
                 truth_score,
                 signals,
+                gtm_summary,
+                financial_summary,
+                security_summary,
+                sentinel_json,
                 scraped_at
             FROM analyses
             WHERE company = ? AND domain = ?
@@ -156,7 +229,43 @@ def get_last_analysis(company: str, domain: str) -> dict[str, Any] | None:
             """,
             (company, domain),
         ).fetchone()
-        return _row_to_dict(row)
+        parsed = _row_to_dict(row)
+        if parsed is None:
+            return None
+        _parse_signals(parsed)
+        return _parse_json_field(parsed, "sentinel_json", None)
+
+
+def get_last_analysis_by_domain(domain: str) -> dict[str, Any] | None:
+    with _connect() as connection:
+        row = connection.execute(
+            """
+            SELECT
+                id,
+                company,
+                domain,
+                gtm_score,
+                financial_score,
+                security_score,
+                truth_score,
+                signals,
+                gtm_summary,
+                financial_summary,
+                security_summary,
+                sentinel_json,
+                scraped_at
+            FROM analyses
+            WHERE domain = ?
+            ORDER BY scraped_at DESC, id DESC
+            LIMIT 1
+            """,
+            (domain,),
+        ).fetchone()
+        parsed = _row_to_dict(row)
+        if parsed is None:
+            return None
+        _parse_signals(parsed)
+        return _parse_json_field(parsed, "sentinel_json", None)
 
 
 def get_analysis_history(company: str, domain: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -172,6 +281,10 @@ def get_analysis_history(company: str, domain: str, limit: int = 10) -> list[dic
                 security_score,
                 truth_score,
                 signals,
+                gtm_summary,
+                financial_summary,
+                security_summary,
+                sentinel_json,
                 scraped_at
             FROM analyses
             WHERE company = ? AND domain = ?
@@ -180,7 +293,11 @@ def get_analysis_history(company: str, domain: str, limit: int = 10) -> list[dic
             """,
             (company, domain, limit),
         ).fetchall()
-        return [_parse_signals(dict(row)) for row in rows]
+        history = []
+        for row in rows:
+            parsed = _parse_signals(dict(row))
+            history.append(_parse_json_field(parsed, "sentinel_json", None))
+        return history
 
 
 def get_total_analyses_count() -> int:

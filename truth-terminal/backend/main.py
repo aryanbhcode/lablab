@@ -22,15 +22,18 @@ from database import (
     delete_from_watchlist,
     get_analysis_history,
     get_last_analysis,
+    get_last_analysis_by_domain,
     get_query_history,
     get_total_analyses_count,
     get_watchlist,
     init_db,
     save_analysis,
     save_query,
+    save_sentinel_result,
 )
 from predictions import generate_predictions, generate_predictions_by_domain
 from scraper import scrape_jobs, scrape_news, scrape_pricing, scrape_reviews
+from sentinel import run_sentinel
 from synthesizer import MODEL, _extract_json, _message_text, synthesize
 
 
@@ -408,6 +411,20 @@ async def _query_stream(question: str) -> AsyncGenerator[str, None]:
     yield json.dumps({"done": True}) + "\n"
 
 
+async def _run_sentinel_and_save(company: str, domain: str, analysis_result: dict[str, Any]) -> None:
+    try:
+        sentinel_result = await run_sentinel(company, domain, analysis_result)
+        save_sentinel_result(
+            company,
+            domain,
+            sentinel_result,
+            scraped_at=str(analysis_result.get("scraped_at") or ""),
+        )
+        _log(f"sentinel completed for company={company} domain={domain}")
+    except Exception as exc:
+        _log(f"sentinel failed for company={company} domain={domain}: {exc}")
+
+
 def _battle_entry(result: dict[str, Any], is_subject: bool) -> dict[str, Any]:
     return {
         "company": str(result.get("company", "")),
@@ -555,6 +572,7 @@ async def _analyze_stream(company: str, domain: str) -> AsyncGenerator[str, None
     }
     save_analysis(company, domain, result)
     asyncio.create_task(generate_predictions(company, domain))
+    asyncio.create_task(_run_sentinel_and_save(company, domain, result))
 
     elapsed = perf_counter() - started
     _log(f"analysis completed in {elapsed:.2f}s")
@@ -679,6 +697,26 @@ def create_app() -> FastAPI:
 
         from predictions import generate_predictions_by_domain
         return await generate_predictions_by_domain(normalized_domain)
+
+    @app.get("/sentinel/{domain}")
+    async def sentinel(domain: str) -> dict[str, Any]:
+        normalized_domain = _normalize_domain(domain)
+        analysis = get_last_analysis_by_domain(normalized_domain)
+        if not analysis:
+            raise HTTPException(status_code=404, detail="no analysis found for domain")
+
+        if isinstance(analysis.get("sentinel_json"), dict):
+            return analysis["sentinel_json"]
+
+        company = str(analysis.get("company") or _derive_company_from_domain(normalized_domain))
+        sentinel_result = await run_sentinel(company, normalized_domain, analysis)
+        save_sentinel_result(
+            company,
+            normalized_domain,
+            sentinel_result,
+            scraped_at=str(analysis.get("scraped_at") or ""),
+        )
+        return sentinel_result
 
     @app.delete("/watchlist/{company}")
     async def remove_watchlist_entry(company: str) -> dict[str, Any]:

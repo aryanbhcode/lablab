@@ -57,6 +57,33 @@ type PredictionsResult = {
   error?: string;
 };
 
+type SentinelSignal = {
+  signal_id: string;
+  description: string;
+  score: number;
+  evidence: string;
+};
+
+type SentinelPattern = {
+  id: string;
+  name: string;
+  match_percentage: number;
+  historical_examples?: string[];
+  avg_weeks_before_collapse?: number;
+  alert_message?: string;
+  matched_signals?: SentinelSignal[];
+};
+
+type SentinelResult = {
+  sentinel_active: boolean;
+  highest_pattern: SentinelPattern;
+  all_patterns: SentinelPattern[];
+  risk_level: "LOW" | "ELEVATED" | "HIGH" | "CRITICAL";
+  company: string;
+  domain: string;
+  analyzed_at: string;
+};
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const loadingMessages = [
@@ -256,6 +283,140 @@ function PredictiveIntelligence({
   );
 }
 
+function sentinelRiskClasses(riskLevel: SentinelResult["risk_level"]) {
+  if (riskLevel === "CRITICAL") {
+    return {
+      header: "bg-red-600 animate-pulse",
+      border: "border-red-500",
+      text: "text-red-400",
+      fill: "bg-red-500"
+    };
+  }
+  if (riskLevel === "HIGH") {
+    return {
+      header: "bg-orange-600",
+      border: "border-orange-500",
+      text: "text-orange-400",
+      fill: "bg-orange-500"
+    };
+  }
+  if (riskLevel === "ELEVATED") {
+    return {
+      header: "bg-amber-500",
+      border: "border-amber-400",
+      text: "text-amber-400",
+      fill: "bg-amber-400"
+    };
+  }
+  return {
+    header: "bg-[#1D9E75]",
+    border: "border-[#1D9E75]",
+    text: "text-[#1D9E75]",
+    fill: "bg-[#1D9E75]"
+  };
+}
+
+function SentinelMode({
+  company,
+  error,
+  isLoading,
+  sentinel
+}: {
+  company: string;
+  error: string;
+  isLoading: boolean;
+  sentinel: SentinelResult | null;
+}) {
+  if (isLoading) {
+    return (
+      <section className="border border-red-950 bg-black p-5">
+        <p className="text-sm text-red-400">🔍 Scanning for collapse patterns...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return <p className="border border-red-950 bg-red-950/30 p-3 text-sm text-red-400">{error}</p>;
+  }
+
+  if (!sentinel) {
+    return null;
+  }
+
+  const classes = sentinelRiskClasses(sentinel.risk_level);
+  const pattern = sentinel.highest_pattern;
+
+  if (sentinel.risk_level === "LOW") {
+    return (
+      <section className="border border-[#1D9E75]/40 bg-[#1D9E75]/10 p-4 text-sm text-[#1D9E75]">
+        ✓ SENTINEL CLEAR — No collapse patterns detected for {company}
+      </section>
+    );
+  }
+
+  return (
+    <section className={`overflow-hidden border ${classes.border} bg-black`}>
+      <div className={`${classes.header} p-5`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-3xl font-black text-white">⚠ SENTINEL ALERT</h2>
+          <span className="inline-flex border border-white/40 px-3 py-1 text-xs font-black text-white">
+            {sentinel.risk_level} RISK
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-5 p-5">
+        <div className="border border-red-950 bg-[#130303] p-5">
+          <div className="text-sm font-bold text-zinc-500">MATCHES</div>
+          <div className="mt-2 text-3xl font-black text-zinc-100">{pattern.name}</div>
+          <div className={`mt-4 text-7xl font-black ${classes.text}`}>{pattern.match_percentage}%</div>
+          <div className="mt-2 text-sm font-bold text-zinc-500">PATTERN MATCH</div>
+          <p className="mt-4 text-sm leading-6 text-zinc-400">
+            Historical precedent: {(pattern.historical_examples || []).join(" · ")}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-zinc-400">
+            Average time before collapse in historical cases: {pattern.avg_weeks_before_collapse} weeks
+          </p>
+        </div>
+
+        <div className="border border-red-500/50 bg-red-950/30 p-5">
+          <p className="text-lg font-bold leading-8 text-white">{pattern.alert_message}</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {(pattern.matched_signals || []).map((signal) => (
+            <div className="border border-red-950 bg-[#090303] p-4" key={signal.signal_id}>
+              <h3 className="text-sm font-bold text-zinc-100">{signal.description}</h3>
+              <div className="mt-3 h-2 bg-zinc-900">
+                <div className={`h-full ${classes.fill}`} style={{ width: `${Math.round(signal.score * 100)}%` }} />
+              </div>
+              <p className="mt-3 text-xs leading-5 text-zinc-500">{signal.evidence}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          {sentinel.all_patterns.map((item) => (
+            <div
+              className={`border p-4 ${item.id === pattern.id ? `${classes.border} bg-red-950/20` : "border-zinc-900 bg-black"}`}
+              key={item.id}
+            >
+              <div className="text-xs font-bold text-zinc-500">{item.name}</div>
+              <div className={`mt-2 text-2xl font-black ${item.id === pattern.id ? classes.text : "text-zinc-400"}`}>
+                {item.match_percentage}%
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[10px] leading-5 text-zinc-600">
+          SENTINEL pattern matching is based on historical precedent analysis. Not financial advice. For informational purposes only.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export default function Page() {
   const [company, setCompany] = useState("");
   const [domain, setDomain] = useState("");
@@ -265,6 +426,9 @@ export default function Page() {
   const [predictions, setPredictions] = useState<PredictionsResult | null>(null);
   const [isPredictionsLoading, setIsPredictionsLoading] = useState(false);
   const [predictionsError, setPredictionsError] = useState("");
+  const [sentinel, setSentinel] = useState<SentinelResult | null>(null);
+  const [isSentinelLoading, setIsSentinelLoading] = useState(false);
+  const [sentinelError, setSentinelError] = useState("");
   const [error, setError] = useState("");
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
@@ -344,12 +508,47 @@ export default function Page() {
     fetchPredictions();
   }, [result]);
 
+  useEffect(() => {
+    if (!result) {
+      return;
+    }
+
+    const sentinelDomain = result.domain || inferDomain(result.company);
+    if (!sentinelDomain) {
+      return;
+    }
+
+    async function fetchSentinel() {
+      setSentinel(null);
+      setSentinelError("");
+      setIsSentinelLoading(true);
+
+      try {
+        const response = await fetch(`${apiUrl}/sentinel/${encodeURIComponent(sentinelDomain)}`);
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          throw new Error(payload?.error || "Sentinel scan failed.");
+        }
+
+        setSentinel((await response.json()) as SentinelResult);
+      } catch (caughtError) {
+        setSentinelError(caughtError instanceof Error ? caughtError.message : "Sentinel scan failed.");
+      } finally {
+        setIsSentinelLoading(false);
+      }
+    }
+
+    fetchSentinel();
+  }, [result]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setResult(null);
     setPredictions(null);
     setPredictionsError("");
+    setSentinel(null);
+    setSentinelError("");
 
     const nextCompany = company.trim();
     const nextDomain = resolvedDomain.trim();
@@ -563,6 +762,13 @@ export default function Page() {
               predictions={predictions}
             />
 
+            <SentinelMode
+              company={result.company}
+              error={sentinelError}
+              isLoading={isSentinelLoading}
+              sentinel={sentinel}
+            />
+
             <button
               className="h-14 w-full border border-[#1D9E75] bg-transparent text-sm font-bold text-[#1D9E75] transition hover:bg-[#1D9E75] hover:text-black"
               onClick={() => {
@@ -571,6 +777,8 @@ export default function Page() {
                 setResult(null);
                 setPredictions(null);
                 setPredictionsError("");
+                setSentinel(null);
+                setSentinelError("");
                 setError("");
               }}
               type="button"

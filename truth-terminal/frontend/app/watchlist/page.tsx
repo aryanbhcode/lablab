@@ -46,6 +46,11 @@ type QueryHistory = {
   asked_at: string;
 };
 
+type SentinelResult = {
+  risk_level: "LOW" | "ELEVATED" | "HIGH" | "CRITICAL";
+  domain: string;
+};
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const exampleQuestions = [
@@ -98,6 +103,22 @@ function categoryIcon(category: Prediction["category"]) {
     return "$";
   }
   return "SEC";
+}
+
+function sentinelBadgeClass(riskLevel?: SentinelResult["risk_level"]) {
+  if (riskLevel === "CRITICAL") {
+    return "border-red-500/50 bg-red-500/10 text-red-400";
+  }
+  if (riskLevel === "HIGH") {
+    return "border-orange-500/50 bg-orange-500/10 text-orange-400";
+  }
+  if (riskLevel === "ELEVATED") {
+    return "border-amber-400/50 bg-amber-400/10 text-amber-400";
+  }
+  if (riskLevel === "LOW") {
+    return "border-[#1D9E75]/40 bg-[#1D9E75]/10 text-[#1D9E75]";
+  }
+  return "border-zinc-800 bg-zinc-950 text-zinc-600";
 }
 
 function PredictionsPanel({ predictions }: { predictions: PredictionsResult }) {
@@ -181,6 +202,7 @@ export default function WatchlistPage() {
   const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([]);
   const [showQueryHistory, setShowQueryHistory] = useState(false);
   const [expandedQuery, setExpandedQuery] = useState("");
+  const [sentinelByDomain, setSentinelByDomain] = useState<Record<string, SentinelResult>>({});
 
   const inferredDomain = useMemo(() => inferDomain(company), [company]);
   const resolvedDomain = useMemo(() => domain.trim() || inferDomain(company), [company, domain]);
@@ -227,6 +249,51 @@ export default function WatchlistPage() {
   useEffect(() => {
     fetchQueryHistory();
   }, [fetchQueryHistory]);
+
+  useEffect(() => {
+    const missingEntries = entries.filter((entry) => !sentinelByDomain[entry.domain]);
+    if (missingEntries.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchSentinelBadges() {
+      const results = await Promise.all(
+        missingEntries.map(async (entry) => {
+          try {
+            const response = await fetch(`${apiUrl}/sentinel/${encodeURIComponent(entry.domain)}`);
+            if (!response.ok) {
+              return null;
+            }
+            return [entry.domain, (await response.json()) as SentinelResult] as const;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      setSentinelByDomain((current) => {
+        const next = { ...current };
+        for (const result of results) {
+          if (result) {
+            next[result[0]] = result[1];
+          }
+        }
+        return next;
+      });
+    }
+
+    fetchSentinelBadges();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entries, sentinelByDomain]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -640,6 +707,7 @@ export default function WatchlistPage() {
             {entries.map((entry) => {
               const analyzedAt = lastAnalyzed(entry);
               const analyzeHref = `/?company=${encodeURIComponent(entry.company)}&domain=${encodeURIComponent(entry.domain)}`;
+              const sentinelRisk = sentinelByDomain[entry.domain]?.risk_level;
 
               return (
                 <article className="border border-zinc-900 bg-black p-5" key={entry.id}>
@@ -648,6 +716,9 @@ export default function WatchlistPage() {
                       <h3 className="break-words text-lg font-bold text-zinc-100">
                         {entry.company} <span className="text-zinc-500">/</span> {entry.domain}
                       </h3>
+                      <span className={`mt-3 inline-flex border px-2 py-1 text-[10px] font-bold ${sentinelBadgeClass(sentinelRisk)}`}>
+                        SENTINEL: {sentinelRisk || "SCANNING"}
+                      </span>
                       <p className="mt-2 text-sm text-zinc-500">{entry.email}</p>
                       <p className="mt-4 text-[10px] uppercase tracking-wide text-zinc-600">
                         Added {formatTimestamp(entry.created_at)}
