@@ -1,37 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Inter, JetBrains_Mono } from "next/font/google";
-import Layout from "@/components/Layout";
+import { Inter } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist"
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter"
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono"
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Truth Terminal",
-  description: "Truth Terminal"
+  title: "Corporate Truth Terminal",
+  description: "Live intelligence on any company",
 };
 
 export default function RootLayout({
-  children
-}: Readonly<{
+  children,
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body className={`${geist.variable} ${inter.variable} ${jetbrainsMono.variable} font-inter`}>
-        <Layout>{children}</Layout>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${inter.className}`}>
+        {children}
       </body>
     </html>
   );
