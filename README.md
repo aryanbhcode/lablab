@@ -2,6 +2,8 @@
 
 Corporate Truth Terminal is a market intelligence app that analyzes public company signals from jobs, reviews, pricing pages, news, and stored watchlist history. It produces truth scores, predictive intelligence, competitor battle maps, sentinel risk alerts, and natural-language answers over monitored companies.
 
+The application lives in [`truth-terminal/`](truth-terminal/).
+
 ## Stack
 
 - Frontend: Next.js 14, React, TypeScript, Tailwind CSS, Framer Motion
